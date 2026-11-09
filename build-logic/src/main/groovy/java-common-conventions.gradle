@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'kh.edu.istad'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(libs.versions.java.language.version.get())
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { color-scheme: light; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #202c42; background: #f4f6fb; }
+        main { display: flex; min-height: 100vh; min-height: 100svh; padding: 24px; gap: 24px; }
+        .left { position: relative; display: flex; flex: 1.1; flex-direction: column; justify-content: center; overflow: hidden; padding: clamp(32px, 5vw, 80px); border-radius: 28px; background: radial-gradient(ellipse at 15% 90%, #6256c9 0, transparent 55%), radial-gradient(ellipse at 90% 10%, #4a69bc 0, transparent 55%), #253463; color: #fff; }
+        .left::before { content: "ISTAD / PLATFORM"; position: absolute; top: 42px; left: clamp(32px, 5vw, 80px); font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #d4daf8; }
+        .left::after { content: "Your next chapter.\A Starts here."; white-space: pre-line; position: relative; font-size: clamp(36px, 4.5vw, 68px); line-height: 1.14; font-weight: 650; letter-spacing: -2px; }
+        .right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 56px 32px; }
+        form { display: flex; flex-direction: column; width: 100%; max-width: 370px; }
+        form::before { content: "Welcome back"; margin-bottom: 10px; font-size: 34px; line-height: 1.2; font-weight: 700; letter-spacing: -1.2px; }
+        form::after { content: "Or continue with"; margin: 30px 0 18px; text-align: center; font-size: 12px; color: #7b8498; }
+        label { margin: 24px 0 9px; font-size: 13px; font-weight: 600; color: #46516a; }
+        input:not([type="hidden"]) { width: 100%; min-height: 52px; border: 1px solid #dce1ec; border-radius: 11px; padding: 13px 16px; background: #fff; color: #202c42; font: inherit; font-size: 15px; transition: border-color .18s, box-shadow .18s; }
+        input:not([type="hidden"]):hover { border-color: #aab5ce; }
+        input:not([type="hidden"]):focus { outline: none; border-color: #6155c5; box-shadow: 0 0 0 4px #6155c514; }
+        button { margin-top: 28px; min-height: 52px; border: 0; border-radius: 11px; background: #5548b6; color: #fff; font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; box-shadow: 0 6px 16px #5548b620; transition: background .18s, transform .18s; }
+        button:hover { background: #44379d; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        a { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 370px; min-height: 48px; margin-bottom: 10px; border: 1px solid #dce1ec; border-radius: 11px; background: #fff; color: #39445b; font-size: 13px; font-weight: 600; text-decoration: none; transition: background .18s, border-color .18s; }
+        a[href$="/github"]::before { content: "Continue with GitHub"; }
+        a[href$="/google"]::before { content: "Continue with Google"; }
+        a:hover { background: #eceef8; border-color: #b5bcd6; }
+        button:focus-visible, a:focus-visible { outline: 3px solid #9a8de5; outline-offset: 4px; }
+        @media (max-width: 760px) { main { flex-direction: column; padding: 12px; gap: 0; } .left { flex: none; min-height: 230px; padding: 72px 28px 30px; border-radius: 20px; } .left::before { top: 28px; left: 28px; font-size: 10px; } .left::after { font-size: 36px; letter-spacing: -1px; } .right { padding: 38px 20px 24px; } form::before { font-size: 30px; } }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<main>
+
+    <div class="left">
+
+    </div>
+
+    <div class="right">
+        <form action="/login" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password">
+            <button type="submit">Login</button>
+        </form>
+        <a href="/oauth2/authorization/github"></a>
+        <a href="/oauth2/authorization/google"></a>
+    </div>
+</main>
+
+
+</body>
+</html>

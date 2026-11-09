@@ -1,0 +1,11 @@
+plugins {
+    alias(libs.plugins.spring.common.conventions)
+}
+
+dependencies {
+    implementation project(':iam-domain:iam-application-service')
+
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.security:spring-security-web'
+    implementation 'gg.jte:jte-spring-boot-starter-4:3.2.5'
+}

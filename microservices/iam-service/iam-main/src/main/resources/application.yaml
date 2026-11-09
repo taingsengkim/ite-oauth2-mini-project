@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: iam-service
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            client-name: TestingGithub
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - read:user
+              - user:email
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-name: TestingGoogle
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          facebook:
+            client-id: ${FACEBOOK_CLIENT_ID}
+            client-secret: ${FACEBOOK_CLIENT_SECRET}
+            client-name: TestingFacebook
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - public_profile
+              - email
+          telegram:
+            provider: telegram
+            client-id: ${TELEGRAM_CLIENT_ID}
+            client-secret: ${TELEGRAM_CLIENT_SECRET}
+            client-name: Telegram
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile
+        provider:
+          github:
+          google:
+          facebook:
+            user-info-uri: "https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture"
+            user-name-attribute: id
+          telegram:
+            issuer-uri: https://oauth.telegram.org
+      authorizationserver:
+        issuer: http://localhost:9000
+
+  datasource:
+    url: jdbc:postgresql://localhost:9543/db_oauth2
+    username: iteuser
+    password: qwerqwer
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  liquibase:
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: ${spring.datasource.driver-class-name}
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+gg:
+  jte:
+    development-mode: true
+    class-directory: build/jte-classes
+    template-location: /home/kimcuteboy/IdeaProjects/istad-ite-platform/microservices/iam-service/iam-web/src/main/jte
+
+server:
+  port: 9000
+
+logging:
+  level:
+    org.springframework.security: TRACE
