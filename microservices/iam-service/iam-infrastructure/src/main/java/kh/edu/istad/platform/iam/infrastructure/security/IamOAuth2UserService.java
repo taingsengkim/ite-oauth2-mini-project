@@ -5,9 +5,8 @@ import kh.edu.istad.platform.iam.application.exception.ResourceConflictException
 import kh.edu.istad.platform.iam.dto.identity.FederatedIdentityCommand;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
 import kh.edu.istad.platform.iam.model.IdentityProvider;
-import kh.edu.istad.platform.iam.usecase.identity.FindOrProvisionFederatedUserUseCase;
+import kh.edu.istad.platform.iam.application.exception.ProfileCompletionRequiredException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -16,8 +15,6 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,10 +30,7 @@ public class IamOAuth2UserService
     private final DefaultOAuth2UserService delegate =
             new DefaultOAuth2UserService();
 
-    private final RestClient github = RestClient.builder()
-            .baseUrl("https://api.github.com")
-            .defaultHeader("Accept", "application/vnd.github+json")
-            .build();
+    private final GithubEmailClient githubEmails;
 
     private OAuth2User loadFacebookUser(OAuth2UserRequest request) {
         OAuth2User providerUser = delegate.loadUser(request);
@@ -110,6 +104,8 @@ public class IamOAuth2UserService
                     attributes,
                     "id"
             );
+        } catch (ProfileCompletionRequiredException exception) {
+            throw new FederatedProfileRequiredException("facebook", command);
         } catch (AuthenticationFailedException exception) {
             throw failure(
                     "access_denied",
@@ -154,7 +150,8 @@ public class IamOAuth2UserService
             throw failure("invalid_user_info", "GitHub account ID is missing");
         }
 
-        String email = findVerifiedEmail(request);
+        String email = githubEmails.findVerifiedEmail(
+                request.getAccessToken().getTokenValue());
         String displayName = providerUser.getAttribute("name");
         String username = providerUser.getAttribute("login");
         String pictureUrl = providerUser.getAttribute("avatar_url");
@@ -207,6 +204,8 @@ public class IamOAuth2UserService
                     attributes,
                     "id"
             );
+        } catch (ProfileCompletionRequiredException exception) {
+            throw new FederatedProfileRequiredException(registrationId, command);
         } catch (AuthenticationFailedException exception) {
             throw failure("access_denied", "Local account cannot sign in");
         } catch (ResourceConflictException exception) {
@@ -220,42 +219,6 @@ public class IamOAuth2UserService
                     "Required profile information is missing or invalid"
             );
         }
-    }
-
-    private String findVerifiedEmail(OAuth2UserRequest request) {
-        List<Map<String, Object>> emails;
-
-        try {
-            emails = github.get()
-                    .uri("/user/emails")
-                    .headers(headers -> headers.setBearerAuth(
-                            request.getAccessToken().getTokenValue()
-                    ))
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<
-                            List<Map<String, Object>>>() {});
-        } catch (RestClientException exception) {
-            throw failure(
-                    "email_lookup_failed",
-                    "Unable to retrieve GitHub email addresses"
-            );
-        }
-
-        if (emails == null) {
-            return null;
-        }
-
-        return emails.stream()
-                .filter(value -> Boolean.TRUE.equals(value.get("verified")))
-                .filter(value -> value.get("email") instanceof String email
-                        && !email.isBlank())
-                .sorted((first, second) -> Boolean.compare(
-                        Boolean.TRUE.equals(second.get("primary")),
-                        Boolean.TRUE.equals(first.get("primary"))
-                ))
-                .map(value -> (String) value.get("email"))
-                .findFirst()
-                .orElse(null);
     }
 
     private static OAuth2AuthenticationException failure(

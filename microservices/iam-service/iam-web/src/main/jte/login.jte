@@ -2,6 +2,7 @@
 @param boolean loginError
 @param boolean loggedOut
 @param boolean registered
+@param String loginErrorKey = "login.error"
 @param WebUi ui
 
 @template.layout.page(ui = ui, title = ui.t("login.title"), account = false, content = @`
@@ -9,7 +10,7 @@
 <div class="eyebrow">${ui.t("common.account")}</div>
 <h1>${ui.t("login.title")}</h1>
 <p class="page-description">${ui.t("login.subtitle")}</p>
-@template.components.feedback(ui, loginError ? "login.error" : null, registered ? "login.registered" : loggedOut ? "login.loggedOut" : null)
+@template.components.feedback(ui, loginError ? loginErrorKey : null, registered ? "login.registered" : loggedOut ? "login.loggedOut" : null)
 <form method="post" action="/login" class="form-stack">
     @template.components.csrf(ui)
     <div class="field"><label for="username">${ui.t("login.username")}</label><input id="username" name="username" autocomplete="username" maxlength="255" required autofocus></div>

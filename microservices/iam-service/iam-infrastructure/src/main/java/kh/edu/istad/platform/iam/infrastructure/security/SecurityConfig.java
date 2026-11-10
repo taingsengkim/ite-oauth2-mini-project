@@ -236,13 +236,14 @@ public class SecurityConfig {
             IamOidcUserService oidcUserService,
             IamOAuth2UserService oauth2UserService,
             IdentityLinkAuthorizationRequestResolver authorizationRequestResolver,
-            IdentityLinkAuthorizationRequestRepository authorizationRequestRepository
+            IdentityLinkAuthorizationRequestRepository authorizationRequestRepository,
+            SocialLoginFailureHandler socialLoginFailureHandler
     ) throws Exception {
 
         http
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/error", "/register", "/assets/**").permitAll()
+                        .requestMatchers("/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -252,6 +253,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .permitAll()
+                        .failureHandler(socialLoginFailureHandler)
                         .successHandler((request, response, authentication) -> {
                             if (Boolean.TRUE.equals(request.getAttribute("iam.identityLinked"))) {
                                 new org.springframework.security.web.savedrequest.HttpSessionRequestCache()

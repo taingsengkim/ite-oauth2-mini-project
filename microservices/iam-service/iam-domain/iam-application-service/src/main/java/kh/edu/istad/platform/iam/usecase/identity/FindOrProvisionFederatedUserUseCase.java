@@ -6,7 +6,8 @@ import kh.edu.istad.platform.iam.dto.identity.FederatedIdentityCommand;
 import kh.edu.istad.platform.iam.dto.user.AssignRolesToUserCommand;
 import kh.edu.istad.platform.iam.dto.user.AuthUserResult;
 import kh.edu.istad.platform.iam.usecase.user.UserAuthorityResolver;
-import kh.edu.istad.platform.iam.exception.IamDomainException;
+import kh.edu.istad.platform.iam.application.exception.ProfileCompletionRequiredException;
+import kh.edu.istad.platform.iam.dto.identity.FederatedProfileDetails;
 import kh.edu.istad.platform.iam.mapper.user.UserApplicationMapper;
 import kh.edu.istad.platform.iam.model.Identity;
 import kh.edu.istad.platform.iam.model.User;
@@ -39,6 +40,16 @@ public class FindOrProvisionFederatedUserUseCase {
     @Transactional
     public AuthUserResult execute(FederatedIdentityCommand command) {
         Objects.requireNonNull(command, "command");
+        return resolve(command, new FederatedProfileDetails(
+                command.email(), command.givenName(), command.familyName(), command.locale()));
+    }
+
+    @Transactional
+    public AuthUserResult completeProfile(FederatedIdentityCommand command, FederatedProfileDetails profile) {
+        return resolve(Objects.requireNonNull(command, "command"), Objects.requireNonNull(profile, "profile"));
+    }
+
+    private AuthUserResult resolve(FederatedIdentityCommand command, FederatedProfileDetails profile) {
         Objects.requireNonNull(command.provider(), "provider");
 
         if (command.providerSubject() == null
@@ -55,7 +66,7 @@ public class FindOrProvisionFederatedUserUseCase {
             return signIn(existing.get());
         }
 
-        return provision(command);
+        return provision(command, profile);
     }
 
     private AuthUserResult signIn(Identity identity) {
@@ -82,16 +93,16 @@ public class FindOrProvisionFederatedUserUseCase {
         return mapper.toAuthResult(user, authorityResolver.resolve(user.getUuid()));
     }
 
-    private AuthUserResult provision(FederatedIdentityCommand command) {
-        if (command.email() == null || command.email().isBlank()
-                || command.givenName() == null
-                || command.givenName().isBlank()
-                || command.familyName() == null
-                || command.familyName().isBlank()) {
-            throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "Complete email, given name and family name before registration");
+    private AuthUserResult provision(FederatedIdentityCommand command, FederatedProfileDetails profile) {
+        if (profile.email() == null || profile.email().isBlank()
+                || profile.givenName() == null || profile.givenName().isBlank()
+                || profile.familyName() == null || profile.familyName().isBlank()) {
+            throw new ProfileCompletionRequiredException();
         }
 
-        String email = command.email().strip().toLowerCase(Locale.ROOT);
+        String email = profile.email().strip().toLowerCase(Locale.ROOT);
+        boolean emailVerified = command.emailVerified() && command.email() != null
+                && email.equalsIgnoreCase(command.email().strip());
 
         if (users.findByEmail(email).isPresent()) {
             throw new ResourceConflictException("An account already uses this email; sign in and link the provider");
@@ -108,10 +119,10 @@ public class FindOrProvisionFederatedUserUseCase {
         var user = User.createFederated(
                 username,
                 email,
-                command.emailVerified(),
-                command.givenName(),
-                command.familyName(),
-                command.locale() == null ? "en" : command.locale(),
+                emailVerified,
+                profile.givenName().strip(),
+                profile.familyName().strip(),
+                profile.locale() == null ? "en" : profile.locale(),
                 "system",
                 now
         );

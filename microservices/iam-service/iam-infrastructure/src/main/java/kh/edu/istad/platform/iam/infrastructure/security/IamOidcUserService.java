@@ -5,7 +5,7 @@ import kh.edu.istad.platform.iam.application.exception.ResourceConflictException
 import kh.edu.istad.platform.iam.dto.identity.FederatedIdentityCommand;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
 import kh.edu.istad.platform.iam.model.IdentityProvider;
-import kh.edu.istad.platform.iam.usecase.identity.FindOrProvisionFederatedUserUseCase;
+import kh.edu.istad.platform.iam.application.exception.ProfileCompletionRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -91,6 +91,8 @@ public class IamOidcUserService
                     authorities,
                     providerUser
             );
+        } catch (ProfileCompletionRequiredException exception) {
+            throw new FederatedProfileRequiredException(registrationId, command);
         } catch (AuthenticationFailedException exception) {
             throw new OAuth2AuthenticationException(
                     new OAuth2Error("access_denied"),

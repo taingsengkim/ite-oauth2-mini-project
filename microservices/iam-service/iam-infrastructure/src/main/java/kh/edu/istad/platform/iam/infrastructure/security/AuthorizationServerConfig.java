@@ -33,7 +33,7 @@ public class AuthorizationServerConfig {
         service.setAuthorizationRowMapper(
                 new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clients, mapper));
         service.setAuthorizationParametersMapper(
-                new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(mapper));
+                new LocalPrincipalAuthorizationParametersMapper(mapper));
         return service;
     }
 

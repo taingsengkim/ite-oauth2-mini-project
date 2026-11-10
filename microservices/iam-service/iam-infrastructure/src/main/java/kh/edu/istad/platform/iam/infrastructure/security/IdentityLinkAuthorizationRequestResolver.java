@@ -30,6 +30,8 @@ public class IdentityLinkAuthorizationRequestResolver
                 registrations,
                 "/oauth2/authorization"
         );
+        this.delegate.setAuthorizationRequestCustomizer(
+                org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers.withPkce());
         this.currentUserProvider = currentUserProvider;
         this.clock = clock;
     }
@@ -66,6 +68,7 @@ public class IdentityLinkAuthorizationRequestResolver
             return authorizationRequest;
         }
 
+        session.removeAttribute("iam.pendingProfile");
         Object value = session.getAttribute("iam.pendingIdentityLink");
 
         if (!(value instanceof LinkIdentityIntent intent)) {
