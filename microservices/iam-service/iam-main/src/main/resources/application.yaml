@@ -33,7 +33,7 @@ spring:
             client-name: Telegram
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "${TELEGRAM_REDIRECT_URI:https://dragster-armed-lark.ngrok-free.dev/login/oauth2/code/telegram}"
             scope:
               - openid
               - profile
@@ -70,7 +70,9 @@ gg:
 
 server:
   port: 9000
+  forward-headers-strategy: framework
 
 logging:
   level:
-    org.springframework.security: TRACE
+    kh.edu.istad.platform.iam.infrastructure.security.SocialLoginFailureHandler: DEBUG
+    org.springframework.security: INFO

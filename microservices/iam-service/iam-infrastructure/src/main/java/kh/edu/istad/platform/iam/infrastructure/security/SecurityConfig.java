@@ -235,6 +235,7 @@ public class SecurityConfig {
             DaoAuthenticationProvider authenticationProvider,
             IamOidcUserService oidcUserService,
             IamOAuth2UserService oauth2UserService,
+            org.springframework.security.oauth2.client.registration.ClientRegistrationRepository registrations,
             IdentityLinkAuthorizationRequestResolver authorizationRequestResolver,
             IdentityLinkAuthorizationRequestRepository authorizationRequestRepository,
             SocialLoginFailureHandler socialLoginFailureHandler
@@ -242,6 +243,9 @@ public class SecurityConfig {
 
         http
                 .authenticationProvider(authenticationProvider)
+                .addFilterBefore(new TelegramLoginOriginFilter(
+                                registrations.findByRegistrationId("telegram").getRedirectUri()),
+                        org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**").permitAll()
                         .anyRequest().authenticated()
