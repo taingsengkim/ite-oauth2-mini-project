@@ -10,7 +10,11 @@
 <div class="eyebrow">${ui.t("common.account")}</div>
 <h1>${ui.t("login.title")}</h1>
 <p class="page-description">${ui.t("login.subtitle")}</p>
-@template.components.feedback(ui, loginError ? loginErrorKey : null, registered ? "login.registered" : loggedOut ? "login.loggedOut" : null)
+@if(loginError && "login.linkRequired".equals(loginErrorKey))
+    @template.components.linkRequired(ui)
+@else
+    @template.components.feedback(ui, loginError ? loginErrorKey : null, registered ? "login.registered" : loggedOut ? "login.loggedOut" : null)
+@endif
 <form method="post" action="/login" class="form-stack">
     @template.components.csrf(ui)
     <div class="field"><label for="username">${ui.t("login.username")}</label><input id="username" name="username" autocomplete="username" maxlength="255" required autofocus></div>

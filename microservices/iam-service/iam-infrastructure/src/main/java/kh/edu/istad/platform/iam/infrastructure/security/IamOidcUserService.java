@@ -6,6 +6,7 @@ import kh.edu.istad.platform.iam.dto.identity.FederatedIdentityCommand;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
 import kh.edu.istad.platform.iam.model.IdentityProvider;
 import kh.edu.istad.platform.iam.application.exception.ProfileCompletionRequiredException;
+import kh.edu.istad.platform.iam.usecase.identity.FederatedUserProfileSync;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -48,7 +49,9 @@ public class IamOidcUserService
         for (String claim : new String[]{
                 "sub", "email", "email_verified",
                 "name", "given_name", "family_name",
-                "preferred_username", "picture", "locale"
+                "preferred_username", "picture", "locale", "middle_name", "nickname",
+                "profile", "website", "gender", "birthdate", "zoneinfo",
+                "phone_number", "phone_number_verified", "address"
         }) {
             Object value = providerUser.getClaims().get(claim);
 
@@ -73,7 +76,7 @@ public class IamOidcUserService
                 providerUser.getPicture(),
                 providerUser.getGivenName(),
                 providerUser.getFamilyName(),
-                "en",
+                FederatedUserProfileSync.normalizeLocale(providerUser.getLocale()),
                 attributes
         );
 

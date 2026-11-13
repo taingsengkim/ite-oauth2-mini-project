@@ -66,6 +66,8 @@ public class InitRegisteredClient implements ApplicationRunner {
                 .redirectUri(
                         "https://oauth.pstmn.io/v1/browser-callback"
                 )
+                .redirectUri("http://localhost:5173/dashboard/index.html")
+                .redirectUri("http://localhost:9000/dashboard/index.html")
                 .postLogoutRedirectUri("http://127.0.0.1:8080/")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)

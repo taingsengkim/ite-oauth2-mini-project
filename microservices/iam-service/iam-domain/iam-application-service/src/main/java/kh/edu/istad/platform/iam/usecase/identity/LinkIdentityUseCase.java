@@ -26,6 +26,7 @@ public class LinkIdentityUseCase {
     private final IdentityApplicationMapper mapper;
     private final CurrentActorProvider actorProvider;
     private final Clock clock;
+    private final FederatedUserProfileSync profileSync;
 
     @Transactional
     public IdentityResult execute(
@@ -35,7 +36,7 @@ public class LinkIdentityUseCase {
         Objects.requireNonNull(userUuid, "userUuid");
         Objects.requireNonNull(command, "command");
 
-        users.findByUuidForUpdate(userUuid)
+        var user = users.findByUuidForUpdate(userUuid)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userUuid));
 
         var identity = Identity.create(
@@ -66,6 +67,8 @@ public class LinkIdentityUseCase {
             throw new ResourceConflictException("This user already has an account linked for this provider");
         }
 
+        profileSync.apply(user, command, null, actorProvider.currentActor(), clock.instant());
+        users.updateProfile(user);
         return mapper.toResult(identities.create(identity));
     }
 }

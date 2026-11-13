@@ -46,6 +46,12 @@ public interface IdentityPersistenceMapper {
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "lastLoginAt", source = "lastLoginAt")
+    @Mapping(target = "email", source = "email")
+    @Mapping(target = "emailVerified", source = "emailVerified")
+    @Mapping(target = "displayName", source = "displayName")
+    @Mapping(target = "username", source = "username")
+    @Mapping(target = "pictureUrl", source = "pictureUrl")
+    @Mapping(target = "attributes", source = "attributes")
     @Mapping(target = "deleted", source = "deleted")
     @Mapping(target = "deletedAt", source = "deletedAt")
     @Mapping(target = "deletedBy", source = "deletedBy")

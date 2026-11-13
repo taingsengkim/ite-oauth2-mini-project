@@ -29,7 +29,7 @@ public class ResetUserPasswordUseCase {
                 command.confirmPassword()
         );
 
-        var user = repository.findByUuid(command.userUuid())
+        var user = repository.findByUuidForUpdate(command.userUuid())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.userUuid()));
 
         user.changePasswordHash(

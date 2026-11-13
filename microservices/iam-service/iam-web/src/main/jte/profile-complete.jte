@@ -10,7 +10,11 @@
 <div class="eyebrow">${ui.t("login.continueWith", ui.t("provider." + draft.provider().name().toLowerCase(java.util.Locale.ROOT)))}</div>
 <h1>${ui.t("completion.title")}</h1>
 <p class="page-description">${ui.t("completion.subtitle")}</p>
-@template.components.feedback(ui, error)
+@if("completion.accountExists".equals(error))
+    @template.components.linkRequired(ui)
+@else
+    @template.components.feedback(ui, error)
+@endif
 <form method="post" action="/register/complete" class="form-stack">
     @template.components.csrf(ui)
     <input type="hidden" name="proofToken" value="${form.proofToken()}">

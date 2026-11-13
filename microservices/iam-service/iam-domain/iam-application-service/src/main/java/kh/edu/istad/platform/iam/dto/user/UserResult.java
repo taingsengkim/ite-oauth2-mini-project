@@ -13,7 +13,11 @@ public record UserResult(
         String familyName,
         String name,
         String locale,
+        String pictureUrl,
+        String nickname,
+        String phoneNumber,
         boolean enabled,
+        boolean accountNonLocked,
         Instant createdAt,
         Instant updatedAt,
         List<RoleReference> roles

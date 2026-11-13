@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,7 +28,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
 import java.util.Set;
 
 @Configuration
@@ -230,6 +234,43 @@ public class SecurityConfig {
 
     @Bean
     @Order(3)
+    SecurityFilterChain dashboardApiChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/dashboard-api/**")
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/session").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/users").hasAuthority("user:create")
+                        .requestMatchers(HttpMethod.PATCH, "/dashboard-api/users/*").hasAuthority("user:update")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/users/*").hasAuthority("user:delete")
+                        .requestMatchers(HttpMethod.PUT, "/dashboard-api/users/*/password").hasAuthority("user:update")
+                        .requestMatchers(HttpMethod.POST,
+                                "/dashboard-api/users/*/enable", "/dashboard-api/users/*/disable",
+                                "/dashboard-api/users/*/lock", "/dashboard-api/users/*/unlock"
+                        ).hasAuthority("user:update")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/dashboard-api/users",
+                                "/dashboard-api/users/*"
+                        ).hasAuthority("user:read")
+
+                        .anyRequest().denyAll()
+                )
+                .requestCache(RequestCacheConfigurer::disable)
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, exception) ->
+                                response.sendError(401))
+                        .accessDeniedHandler((request, response, exception) ->
+                                response.sendError(403))
+                );
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(4)
     SecurityFilterChain browserChain(
             HttpSecurity http,
             DaoAuthenticationProvider authenticationProvider,
@@ -314,4 +355,25 @@ public class SecurityConfig {
 
         return converter;
     }
+
+    @Bean
+    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        var configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(
+                List.of("http://localhost:5173")
+        );
+        configuration.setAllowedMethods(
+                List.of("GET", "POST", "OPTIONS")
+        );
+        configuration.setAllowedHeaders(
+                List.of("Content-Type", "Authorization", "Accept")
+        );
+
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
+
 }

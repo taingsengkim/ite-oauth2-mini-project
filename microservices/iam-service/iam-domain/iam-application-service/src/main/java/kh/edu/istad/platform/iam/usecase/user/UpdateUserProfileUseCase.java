@@ -23,7 +23,7 @@ public class UpdateUserProfileUseCase {
 
     @Transactional
     public UserResult execute(UpdateUserProfileCommand command) {
-        var user = repository.findByUuid(command.uuid())
+        var user = repository.findByUuidForUpdate(command.uuid())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.uuid()));
 
         user.updateProfile(

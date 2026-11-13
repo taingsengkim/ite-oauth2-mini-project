@@ -167,13 +167,17 @@ public class IamOAuth2UserService
 
         Map<String, Object> attributes = new LinkedHashMap<>();
 
-        for (String key : List.of("id", "login", "name", "avatar_url")) {
+        for (String key : List.of("id", "login", "name", "avatar_url", "html_url", "blog")) {
             Object value = providerUser.getAttributes().get(key);
 
             if (value != null) {
                 attributes.put(key, value);
             }
         }
+
+        if (attributes.get("html_url") instanceof String profile) attributes.put("profile", profile);
+        if (attributes.get("blog") instanceof String website) attributes.put("website", website);
+        if (username != null) attributes.put("nickname", username);
 
         var command = new FederatedIdentityCommand(
                 IdentityProvider.GITHUB,

@@ -1,6 +1,8 @@
 package kh.edu.istad.platform.iam.persistence.adapter;
 
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
+import kh.edu.istad.platform.iam.application.exception.ResourceConflictException;
+import org.springframework.dao.DataIntegrityViolationException;
 import kh.edu.istad.platform.iam.dto.user.UserFilterQuery;
 import kh.edu.istad.platform.iam.dto.pagination.PageResult;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
@@ -89,8 +91,16 @@ public class UserPersistenceAdapter implements UserRepository {
                 new ResourceNotFoundException("User", user.getUuid()
         ));
         mapper.updateProfileEntity(user, entity);
-        var saved = repository.saveAndFlush(entity);
-        return mapper.toDomain(saved);
+        try {
+            return mapper.toDomain(repository.saveAndFlush(entity));
+        } catch (DataIntegrityViolationException exception) {
+            for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+                if (cause.getMessage() != null && cause.getMessage().contains("uk_users_phone_number")) {
+                    throw new ResourceConflictException("Phone number is already registered");
+                }
+            }
+            throw exception;
+        }
     }
 
     @Override
@@ -109,7 +119,6 @@ public class UserPersistenceAdapter implements UserRepository {
                 .orElseThrow(() -> new ResourceNotFoundException("User", user.getUuid()));
 
         mapper.softDeleteEntity(user, entity);
-
         repository.saveAndFlush(entity);
     }
 

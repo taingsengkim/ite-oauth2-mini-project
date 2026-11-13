@@ -213,6 +213,23 @@ public class Identity {
         updatedBy = validatedActor;
         updatedAt = now;
     }
+    public void refreshProfile(String email, boolean emailVerified, String displayName, String username,
+                               String pictureUrl, Map<String, Object> attributes, String actor, Instant now) {
+        prepareChange(actor, now);
+        if (email != null && !email.isBlank()) {
+            this.email = optional(email, "email", 255);
+            this.emailVerified = emailVerified;
+        }
+        if (displayName != null && !displayName.isBlank()) this.displayName = optional(displayName, "displayName", 150);
+        if (username != null && !username.isBlank()) this.username = optional(username, "username", 100);
+        if (pictureUrl != null && !pictureUrl.isBlank()) this.pictureUrl = optional(pictureUrl, "pictureUrl", 500);
+        var merged = new java.util.LinkedHashMap<>(this.attributes);
+        attributes.forEach((key, value) -> {
+            if (value != null && (!(value instanceof String text) || !text.isBlank())) merged.put(key, value);
+        });
+        this.attributes = java.util.Collections.unmodifiableMap(merged);
+    }
+
     public void recordSuccessfulLogin(String actor, Instant now) {
         prepareChange(actor, now);
         lastLoginAt = now;

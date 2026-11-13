@@ -10,6 +10,7 @@ import kh.edu.istad.platform.iam.application.exception.ProfileCompletionRequired
 import kh.edu.istad.platform.iam.dto.identity.FederatedProfileDetails;
 import kh.edu.istad.platform.iam.mapper.user.UserApplicationMapper;
 import kh.edu.istad.platform.iam.model.Identity;
+import kh.edu.istad.platform.iam.model.IdentityProvider;
 import kh.edu.istad.platform.iam.model.User;
 import kh.edu.istad.platform.iam.port.out.identity.IdentityRepository;
 import kh.edu.istad.platform.iam.port.out.role.RoleRepository;
@@ -36,6 +37,7 @@ public class FindOrProvisionFederatedUserUseCase {
     private final UserApplicationMapper mapper;
     private final UserAuthorityResolver authorityResolver;
     private final Clock clock;
+    private final FederatedUserProfileSync profileSync;
 
     @Transactional
     public AuthUserResult execute(FederatedIdentityCommand command) {
@@ -63,27 +65,79 @@ public class FindOrProvisionFederatedUserUseCase {
         );
 
         if (existing.isPresent()) {
-            return signIn(existing.get());
+            return signIn(existing.get(), command);
+        }
+
+        // Only provider-verified email may select an existing local account.
+        // Never use email entered on the profile-completion form for automatic linking.
+        if (canLinkByEmail(command)) {
+            var matchingUser = users.findByEmail(normalizedEmail(command.email()));
+            if (matchingUser.isPresent()) {
+                return linkVerifiedEmail(matchingUser.get().getUuid(), command);
+            }
         }
 
         return provision(command, profile);
     }
 
-    private AuthUserResult signIn(Identity identity) {
+    private static boolean canLinkByEmail(FederatedIdentityCommand command) {
+        return (command.provider() == IdentityProvider.GOOGLE || command.provider() == IdentityProvider.GITHUB)
+                && command.emailVerified() && command.email() != null && !command.email().isBlank();
+    }
+
+    private static String normalizedEmail(String email) {
+        return email.strip().toLowerCase(Locale.ROOT);
+    }
+
+    private AuthUserResult linkVerifiedEmail(UUID userUuid, FederatedIdentityCommand command) {
+        var user = users.findByUuidForUpdate(userUuid).orElseThrow(AuthenticationFailedException::new);
+        requireActiveAccount(user);
+        if (!normalizedEmail(command.email()).equals(normalizedEmail(user.getEmail()))) {
+            throw new AuthenticationFailedException();
+        }
+
+        // Recheck after locking the owner to serialize concurrent logins/link requests.
+        var linked = identities.findByProviderAndSubject(command.provider(), command.providerSubject());
+        if (linked.isPresent()) {
+            if (!linked.get().getUserUuid().equals(userUuid)) {
+                throw new ResourceConflictException("This external account is already linked");
+            }
+            return signIn(user, linked.get(), command);
+        }
+        if (identities.findByUserUuidAndProvider(userUuid, command.provider()).isPresent()) {
+            throw new ResourceConflictException("A different account for this provider is already linked; sign in and manage Linked accounts");
+        }
+
+        var identity = identities.create(newIdentity(userUuid, command, clock.instant()));
+        return signIn(user, identity, command);
+    }
+
+    private AuthUserResult signIn(Identity identity, FederatedIdentityCommand command) {
         var user = users.findByUuidForUpdate(identity.getUserUuid()).orElseThrow(AuthenticationFailedException::new);
 
         var currentIdentity = identities.findByUuid(identity.getUuid())
                 .filter(value -> value.getUserUuid().equals(user.getUuid()))
                 .orElseThrow(AuthenticationFailedException::new);
 
+        return signIn(user, currentIdentity, command);
+    }
+
+    private static void requireActiveAccount(User user) {
         if (!user.isEnabled()
                 || !user.isAccountNonLocked()
                 || !user.isAccountNonExpired()) {
             throw new AuthenticationFailedException();
         }
+    }
 
+    private AuthUserResult signIn(User user, Identity currentIdentity, FederatedIdentityCommand command) {
+        requireActiveAccount(user);
         var now = clock.instant();
 
+        profileSync.apply(user, command, currentIdentity.getPictureUrl(), "system", now);
+        users.updateProfile(user);
+        currentIdentity.refreshProfile(command.email(), command.emailVerified(), command.displayName(),
+                command.username(), command.pictureUrl(), command.attributes(), "system", now);
         currentIdentity.recordSuccessfulLogin("system", now);
         identities.update(currentIdentity);
 
@@ -100,7 +154,7 @@ public class FindOrProvisionFederatedUserUseCase {
             throw new ProfileCompletionRequiredException();
         }
 
-        String email = profile.email().strip().toLowerCase(Locale.ROOT);
+        String email = normalizedEmail(profile.email());
         boolean emailVerified = command.emailVerified() && command.email() != null
                 && email.equalsIgnoreCase(command.email().strip());
 
@@ -122,26 +176,15 @@ public class FindOrProvisionFederatedUserUseCase {
                 emailVerified,
                 profile.givenName().strip(),
                 profile.familyName().strip(),
-                profile.locale() == null ? "en" : profile.locale(),
+                FederatedUserProfileSync.normalizeLocale(profile.locale()),
                 "system",
                 now
         );
 
+        profileSync.apply(user, command, null, "system", now);
         var saved = users.create(user);
 
-        var identity = Identity.create(
-                saved.getUuid(),
-                command.provider(),
-                command.providerSubject(),
-                command.email(),
-                command.emailVerified(),
-                command.displayName(),
-                command.username(),
-                command.pictureUrl(),
-                command.attributes(),
-                "system",
-                now
-        );
+        var identity = newIdentity(saved.getUuid(), command, now);
 
         identity.recordSuccessfulLogin("system", now);
         identities.create(identity);
@@ -157,5 +200,11 @@ public class FindOrProvisionFederatedUserUseCase {
         users.updateLoginMetadata(saved);
 
         return mapper.toAuthResult(saved, authorityResolver.resolve(saved.getUuid()));
+    }
+
+    private static Identity newIdentity(UUID userUuid, FederatedIdentityCommand command, java.time.Instant now) {
+        return Identity.create(userUuid, command.provider(), command.providerSubject(), command.email(),
+                command.emailVerified(), command.displayName(), command.username(), command.pictureUrl(),
+                command.attributes(), "system", now);
     }
 }

@@ -34,6 +34,14 @@ public interface UserPersistenceMapper {
     @Mapping(target = "locale", source = "locale")
     @Mapping(target = "phoneNumber", source = "phoneNumber")
     @Mapping(target = "phoneNumberVerified", source = "phoneNumberVerified")
+    @Mapping(target = "middleName", source = "middleName")
+    @Mapping(target = "gender", source = "gender")
+    @Mapping(target = "birthdate", source = "birthdate")
+    @Mapping(target = "zoneinfo", source = "zoneinfo")
+    @Mapping(target = "profileUrl", source = "profileUrl")
+    @Mapping(target = "pictureUrl", source = "pictureUrl")
+    @Mapping(target = "websiteUrl", source = "websiteUrl")
+    @Mapping(target = "address", source = "address")
     void updateProfileEntity(User user, @MappingTarget UserEntity entity);
 
 

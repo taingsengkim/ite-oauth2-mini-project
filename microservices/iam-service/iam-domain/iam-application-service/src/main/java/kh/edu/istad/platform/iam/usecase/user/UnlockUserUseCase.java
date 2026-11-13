@@ -20,7 +20,7 @@ public class UnlockUserUseCase {
 
     @Transactional
     public void execute(UUID uuid) {
-        var user = repository.findByUuid(uuid)
+        var user = repository.findByUuidForUpdate(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("User", uuid));
 
         user.unlock(actorProvider.currentActor(), clock.instant());

@@ -12,7 +12,11 @@ public record UserResponse(
         String familyName,
         String name,
         String locale,
+        String pictureUrl,
+        String nickname,
+        String phoneNumber,
         boolean enabled,
+        boolean accountNonLocked,
         Instant createdAt,
         Instant updatedAt,
         List<RoleReferenceResponse> roles
