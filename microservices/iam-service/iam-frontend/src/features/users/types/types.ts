@@ -43,6 +43,17 @@ export type UpdateUserInput = {
 
 export type UserStatusAction = 'enable' | 'disable' | 'lock' | 'unlock'
 
+export type AssignedUserRole = {
+  uuid: string
+  name: string
+  active: boolean
+  system: boolean
+  assignedAt: string
+  assignedBy: string
+  expiresAt: string | null
+  expired: boolean
+}
+
 export type CreateUserInput = {
   username: string
   email: string

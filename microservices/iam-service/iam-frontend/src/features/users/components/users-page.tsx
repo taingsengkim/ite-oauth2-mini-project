@@ -16,12 +16,16 @@ import type { UserDetails, User, UserStatusAction } from '../types/types'
 import { UserStatusDialog } from './user-status-dialog'
 import { DeleteUserDialog } from './delete-user-dialog'
 import { ResetPasswordDialog } from './reset-password-dialog'
+import { UserRolesDialog } from './user-roles-dialog'
 
 export function UsersPage() {
     const [createOpen, setCreateOpen] = useState(false)
     const [canCreate, setCanCreate] = useState(false)
     const [canUpdate, setCanUpdate] = useState(false)
     const [canDelete, setCanDelete] = useState(false)
+    const [canAssignRoles, setCanAssignRoles] = useState(false)
+    const [canBrowseRoles, setCanBrowseRoles] = useState(false)
+    const [roleUser, setRoleUser] = useState<User | null>(null)
     const [deletingUser, setDeletingUser] = useState<User | null>(null)
     const [resettingUser, setResettingUser] = useState<User | null>(null)
     const [editingUuid, setEditingUuid] = useState<string | null>(null)
@@ -38,6 +42,8 @@ export function UsersPage() {
                     setCanCreate(session.authorities.includes('user:create'))
                     setCanUpdate(session.authorities.includes('user:update'))
                     setCanDelete(session.authorities.includes('user:delete'))
+                    setCanAssignRoles(session.authorities.includes('user:assign'))
+                    setCanBrowseRoles(session.authorities.includes('role:read'))
                     setCurrentUserUuid(session.userUuid)
                 }
             })
@@ -139,6 +145,8 @@ export function UsersPage() {
                 </div>
             )}
             {createOpen && <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={handleCreated} />}
+            {roleUser && <UserRolesDialog key={roleUser.uuid} user={roleUser} canBrowse={canBrowseRoles} currentUserUuid={currentUserUuid}
+                onClose={() => setRoleUser(null)} onChanged={(message) => { setSuccess(message); setRetryKey((value) => value + 1) }} />}
             {editingUuid && <EditUserDialog key={editingUuid} uuid={editingUuid}
                 onClose={() => setEditingUuid(null)} onSaved={handleSaved} />}
             {deletingUser && <DeleteUserDialog key={deletingUser.uuid} user={deletingUser}
@@ -226,6 +234,7 @@ export function UsersPage() {
                         currentUserUuid={currentUserUuid}
                         onDeleteUser={canDelete ? (user) => { setSuccess(null); setDeletingUser(user) } : undefined}
                         onResetPassword={canUpdate ? (user) => { setSuccess(null); setResettingUser(user) } : undefined}
+                        onManageRoles={canAssignRoles ? (user) => { setSuccess(null); setRoleUser(user) } : undefined}
                         onStatusAction={canUpdate ? (user, action) => { setSuccess(null); setStatusChange({ user, action }) } : undefined}
                     />
                     <div className="flex flex-wrap items-center justify-between gap-3">

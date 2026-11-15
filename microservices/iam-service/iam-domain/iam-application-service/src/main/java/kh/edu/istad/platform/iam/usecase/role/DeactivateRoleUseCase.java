@@ -18,7 +18,7 @@ public class DeactivateRoleUseCase {
     private final Clock clock;
     @Transactional
     public void execute(UUID uuid) {
-        Role role = repository.findByUuid(uuid).orElseThrow(() -> new ResourceNotFoundException("Role", uuid));
+        Role role = repository.findByUuidForUpdate(uuid).orElseThrow(() -> new ResourceNotFoundException("Role", uuid));
         role.deactivate(actorProvider.currentActor(), clock.instant());
         repository.update(role);
     }

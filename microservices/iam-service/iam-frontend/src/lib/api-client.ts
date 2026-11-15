@@ -57,3 +57,15 @@ export type DashboardSession = {
 export function getDashboardSession(signal?: AbortSignal) {
   return requestJson<DashboardSession>('/dashboard-api/session', { signal })
 }
+
+export async function mutateJson<T>(url: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
+  const session = await getDashboardSession()
+  return requestJson<T>(url, {
+    method,
+    headers: {
+      [session.csrfHeaderName]: session.csrfToken,
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  })
+}

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import {UsersPage} from "@/features/users/components/users-page.tsx";
+import { RolesPage } from '@/features/roles/pages/roles-page'
 
 const sections = [
   {
@@ -68,6 +69,8 @@ export default function App() {
             </div>
         )  : page === 'Users' ? (
                     <UsersPage />
+        ) : page === 'Roles' ? (
+                    <RolesPage />
         ) : (
             <Card>
               <CardHeader>

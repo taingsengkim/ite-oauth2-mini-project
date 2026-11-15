@@ -21,7 +21,7 @@ public class UpdateRoleUseCase {
     private final RoleApplicationMapper mapper;
     @Transactional
     public RoleResult execute(UpdateRoleCommand command) {
-        Role role = repository.findByUuid(command.uuid())
+        Role role = repository.findByUuidForUpdate(command.uuid())
                 .orElseThrow(() -> new ResourceNotFoundException("Role", command.uuid()));
         role.update(command.name(), command.description(), actorProvider.currentActor(), clock.instant());
         return mapper.toResult(repository.update(role));

@@ -2,4 +2,4 @@ package kh.edu.istad.platform.iam.dto.role;
 
 import java.util.UUID;
 
-public record RoleSummary(UUID uuid, String name, boolean active) {}
+public record RoleSummary(UUID uuid, String name, String description, boolean system, boolean active) {}

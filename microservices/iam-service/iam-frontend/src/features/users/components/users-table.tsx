@@ -22,10 +22,11 @@ type UsersTableProps = {
     onStatusAction?: (user: User, action: UserStatusAction) => void
     onDeleteUser?: (user: User) => void
     onResetPassword?: (user: User) => void
+    onManageRoles?: (user: User) => void
     currentUserUuid?: string | null
 }
 
-export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDeleteUser,onResetPassword,currentUserUuid }: UsersTableProps) {
+export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDeleteUser,onResetPassword,onManageRoles,currentUserUuid }: UsersTableProps) {
     return (
         <div className="overflow-hidden rounded-lg border">
             <Table>
@@ -90,6 +91,7 @@ export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDelete
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="min-w-44">
                                             <DropdownMenuItem onClick={() => onViewUser(user.uuid)}>View details</DropdownMenuItem>
+                                            {onManageRoles && <DropdownMenuItem onClick={() => onManageRoles(user)}>Manage roles</DropdownMenuItem>}
                                             {onEditUser && <DropdownMenuItem onClick={() => onEditUser(user.uuid)}>Edit profile</DropdownMenuItem>}
                                             {onResetPassword && <DropdownMenuItem onClick={() => onResetPassword(user)}>Reset password</DropdownMenuItem>}
                                             {onStatusAction && <>

@@ -18,7 +18,7 @@ public class ActivateRoleUseCase {
     private final Clock clock;
     @Transactional
     public void execute(UUID uuid) {
-        Role role = repository.findByUuid(uuid)
+        Role role = repository.findByUuidForUpdate(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", uuid));
         role.activate(actorProvider.currentActor(), clock.instant());
         repository.update(role);

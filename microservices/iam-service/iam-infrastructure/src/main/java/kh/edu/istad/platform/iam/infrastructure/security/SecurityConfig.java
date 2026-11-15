@@ -242,6 +242,20 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/dashboard-api/session").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/users/*/roles").hasAuthority("user:read")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/users/*/roles").hasAuthority("user:assign")
+                        .requestMatchers(HttpMethod.PUT, "/dashboard-api/users/*/roles/*").hasAuthority("user:assign")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/users/*/roles/*").hasAuthority("user:assign")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/roles", "/dashboard-api/roles/*",
+                                "/dashboard-api/roles/*/permissions").hasAuthority("role:read")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/roles").hasAuthority("role:create")
+                        .requestMatchers(HttpMethod.PATCH, "/dashboard-api/roles/*").hasAuthority("role:update")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/roles/*/activate",
+                                "/dashboard-api/roles/*/deactivate").hasAuthority("role:update")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/roles/*").hasAuthority("role:delete")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/roles/*/permissions").hasAuthority("role:assign")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/roles/*/permissions/*").hasAuthority("role:assign")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/permissions").hasAuthority("permission:read")
                         .requestMatchers(HttpMethod.POST, "/dashboard-api/users").hasAuthority("user:create")
                         .requestMatchers(HttpMethod.PATCH, "/dashboard-api/users/*").hasAuthority("user:update")
                         .requestMatchers(HttpMethod.DELETE, "/dashboard-api/users/*").hasAuthority("user:delete")
