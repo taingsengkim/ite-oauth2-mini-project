@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceConflictException;
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.dto.user.AssignRolesToUserCommand;
@@ -33,6 +36,7 @@ public class AssignRolesToUserUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_ROLES_ASSIGNED, target = "#p0.userUuid()", related = "#p0.roleUuids()", expiry = "#p0.expiresAt()")
     public List<RoleAssignmentResult> execute(AssignRolesToUserCommand command) {
         Objects.requireNonNull(command, "command");
         var roleUuids = command.roleUuids();

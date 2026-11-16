@@ -33,6 +33,9 @@ public class LoginAttemptListener {
             return;
         }
 
-        recordLoginAttempt.execute(authentication.getName(), false);
+        if (event.getException() instanceof org.springframework.security.authentication.BadCredentialsException
+                || event.getException() instanceof org.springframework.security.core.userdetails.UsernameNotFoundException) {
+            recordLoginAttempt.execute(authentication.getName(), false);
+        }
     }
 }

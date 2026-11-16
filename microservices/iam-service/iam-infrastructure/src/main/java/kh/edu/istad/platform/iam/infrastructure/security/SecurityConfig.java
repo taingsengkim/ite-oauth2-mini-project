@@ -40,9 +40,14 @@ import java.util.Set;
 public class SecurityConfig {
 
     @Bean
+    org.springframework.boot.web.servlet.ServletListenerRegistrationBean<BrowserUserSessions> sessionListener(BrowserUserSessions sessions) {
+        return new org.springframework.boot.web.servlet.ServletListenerRegistrationBean<>(sessions);
+    }
+
+    @Bean
     @Order(1)
     SecurityFilterChain authorizationServerChain(
-            HttpSecurity http) throws Exception {
+            HttpSecurity http, BrowserUserSessions sessions) throws Exception {
 
         var authorizationServer =
                 new OAuth2AuthorizationServerConfigurer();
@@ -105,6 +110,8 @@ public class SecurityConfig {
                         resource.jwt(Customizer.withDefaults())
                 );
 
+        http.addFilterBefore(new BrowserSessionTrackingFilter(sessions),
+                org.springframework.security.web.authentication.logout.LogoutFilter.class);
         return http.build();
     }
 
@@ -234,14 +241,26 @@ public class SecurityConfig {
 
     @Bean
     @Order(3)
-    SecurityFilterChain dashboardApiChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain dashboardApiChain(HttpSecurity http, BrowserUserSessions sessions) throws Exception {
         http
                 .securityMatcher("/dashboard-api/**")
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.GET, "/dashboard-api/session").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/session", "/dashboard-api/password-policy", "/dashboard-api/client-defaults").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/configuration").hasAuthority("configuration:read")
+                        .requestMatchers(HttpMethod.PUT, "/dashboard-api/configuration").hasAuthority("configuration:update")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/overview").hasAuthority("overview:read")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/audit-logs", "/dashboard-api/audit-logs/options").hasAuthority("audit:read")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/clients", "/dashboard-api/clients/*").hasAuthority("client:read")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/clients").hasAuthority("client:create")
+                        .requestMatchers(HttpMethod.PUT, "/dashboard-api/clients/*").hasAuthority("client:update")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/clients/*/secret").hasAuthority("client:update")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/clients/*").hasAuthority("client:delete")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/login-history", "/dashboard-api/users/*/login-history").hasAuthority("user:read")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/users/*/sessions").hasAuthority("user:read")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/users/*/sessions", "/dashboard-api/users/*/sessions/*").hasAuthority("user:update")
                         .requestMatchers(HttpMethod.GET, "/dashboard-api/users/*/roles").hasAuthority("user:read")
                         .requestMatchers(HttpMethod.POST, "/dashboard-api/users/*/roles").hasAuthority("user:assign")
                         .requestMatchers(HttpMethod.PUT, "/dashboard-api/users/*/roles/*").hasAuthority("user:assign")
@@ -255,7 +274,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/dashboard-api/roles/*").hasAuthority("role:delete")
                         .requestMatchers(HttpMethod.POST, "/dashboard-api/roles/*/permissions").hasAuthority("role:assign")
                         .requestMatchers(HttpMethod.DELETE, "/dashboard-api/roles/*/permissions/*").hasAuthority("role:assign")
-                        .requestMatchers(HttpMethod.GET, "/dashboard-api/permissions").hasAuthority("permission:read")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/permissions", "/dashboard-api/permissions/*").hasAuthority("permission:read")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/permissions").hasAuthority("permission:create")
+                        .requestMatchers(HttpMethod.PATCH, "/dashboard-api/permissions/*").hasAuthority("permission:update")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/permissions/*").hasAuthority("permission:delete")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/permissions/*/activate", "/dashboard-api/permissions/*/deactivate").hasAuthority("permission:update")
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/users/*/permissions", "/dashboard-api/users/*/authorities").hasAuthority("user:read")
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/users/*/permissions").hasAuthority("user:assign")
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/users/*/permissions/*").hasAuthority("user:assign")
                         .requestMatchers(HttpMethod.POST, "/dashboard-api/users").hasAuthority("user:create")
                         .requestMatchers(HttpMethod.PATCH, "/dashboard-api/users/*").hasAuthority("user:update")
                         .requestMatchers(HttpMethod.DELETE, "/dashboard-api/users/*").hasAuthority("user:delete")
@@ -280,6 +306,8 @@ public class SecurityConfig {
                                 response.sendError(403))
                 );
 
+        http.addFilterBefore(new BrowserSessionTrackingFilter(sessions),
+                org.springframework.security.web.authentication.logout.LogoutFilter.class);
         return http.build();
     }
 
@@ -293,6 +321,8 @@ public class SecurityConfig {
             org.springframework.security.oauth2.client.registration.ClientRegistrationRepository registrations,
             IdentityLinkAuthorizationRequestResolver authorizationRequestResolver,
             IdentityLinkAuthorizationRequestRepository authorizationRequestRepository,
+            LoginHistoryRecorder loginHistory,
+            BrowserUserSessions sessions,
             SocialLoginFailureHandler socialLoginFailureHandler
     ) throws Exception {
 
@@ -308,12 +338,23 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .permitAll()
+                        .successHandler((request, response, authentication) -> {
+                            loginHistory.success(request, authentication);
+                            new org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler()
+                                    .onAuthenticationSuccess(request, response, authentication);
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            loginHistory.passwordFailure(request, exception);
+                            new org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler("/login?error")
+                                    .onAuthenticationFailure(request, response, exception);
+                        })
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .permitAll()
                         .failureHandler(socialLoginFailureHandler)
                         .successHandler((request, response, authentication) -> {
+                            loginHistory.success(request, authentication);
                             if (Boolean.TRUE.equals(request.getAttribute("iam.identityLinked"))) {
                                 new org.springframework.security.web.savedrequest.HttpSessionRequestCache()
                                         .removeRequest(request, response);
@@ -337,6 +378,8 @@ public class SecurityConfig {
                         )
                 );
 
+        http.addFilterBefore(new BrowserSessionTrackingFilter(sessions),
+                org.springframework.security.web.authentication.logout.LogoutFilter.class);
         return http.build();
     }
 

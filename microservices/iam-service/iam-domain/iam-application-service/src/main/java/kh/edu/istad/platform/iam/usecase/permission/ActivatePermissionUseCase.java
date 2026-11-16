@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.permission;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.model.Permission;
 import kh.edu.istad.platform.iam.port.out.CurrentActorProvider;
@@ -19,6 +22,7 @@ public class ActivatePermissionUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.PERMISSION_ACTIVATED, target = "#p0")
     public void execute(UUID uuid) {
         Permission permission= repository.findByUuid(uuid)
                 .orElseThrow(()->new ResourceNotFoundException("Permission",uuid));

@@ -30,6 +30,7 @@ import java.util.Optional;
 public class SessionFederatedProfileCompletion implements FederatedProfileCompletion {
     private final FindOrProvisionFederatedUserUseCase findOrProvision;
     private final Clock clock;
+    private final LoginHistoryRecorder loginHistory;
 
     @Override
     public Optional<FederatedProfileDraft> pending() {
@@ -64,6 +65,7 @@ public class SessionFederatedProfileCompletion implements FederatedProfileComple
             SecurityContextHolder.setContext(context);
             new HttpSessionSecurityContextRepository().saveContext(context, request, response);
             session.removeAttribute("iam.pendingProfile");
+            loginHistory.success(request, authentication);
             return redirect(request, response);
         }
     }

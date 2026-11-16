@@ -1,33 +1,25 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import type { DashboardPage } from '@/components/layout/app-sidebar'
-import { Button } from '@/components/ui/button'
+import { OverviewPage } from '@/features/overview/pages/overview-page'
 
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import {UsersPage} from "@/features/users/components/users-page.tsx";
 import { RolesPage } from '@/features/roles/pages/roles-page'
+import { PermissionsPage } from '@/features/permissions/pages/permissions-page'
 
-const sections = [
-  {
-    name: 'Users',
-    description: 'Manage accounts and account status.',
-  },
-  {
-    name: 'Roles',
-    description: 'Organize access by responsibility.',
-  },
-  {
-    name: 'Permissions',
-    description: 'Define actions users can perform.',
-  },
-] as const
+const ClientsPage = lazy(() => import('@/features/clients/pages/clients-page').then((module) => ({ default: module.ClientsPage })))
+
+const AuditLogsPage = lazy(() => import('@/features/audit/pages/audit-logs-page').then((module) => ({ default: module.AuditLogsPage })))
+
+
+const ConfigurationPage = lazy(() => import('@/features/configuration/pages/configuration-page').then((module) => ({ default: module.ConfigurationPage })))
 
 export default function App() {
   const [page, setPage] = useState<DashboardPage>('Overview')
@@ -48,29 +40,19 @@ export default function App() {
         </div>
 
         {page === 'Overview' ? (
-            <div className="grid gap-4 md:grid-cols-3">
-              {sections.map(({ name, description }) => (
-                  <Card key={name}>
-                    <CardHeader>
-                      <CardTitle>{name}</CardTitle>
-                      <CardDescription>{description}</CardDescription>
-                    </CardHeader>
-
-                    <CardContent>
-                      <Button
-                          variant="outline"
-                          onClick={() => setPage(name)}
-                      >
-                        Manage {name.toLowerCase()}
-                      </Button>
-                    </CardContent>
-                  </Card>
-              ))}
-            </div>
+            <OverviewPage onNavigate={setPage} />
         )  : page === 'Users' ? (
                     <UsersPage />
         ) : page === 'Roles' ? (
                     <RolesPage />
+        ) : page === 'System Configuration' ? (
+                    <Suspense fallback={<p role="status">Loading system configuration...</p>}><ConfigurationPage /></Suspense>
+        ) : page === 'Audit Logs' ? (
+                    <Suspense fallback={<p role="status">Loading audit logs...</p>}><AuditLogsPage /></Suspense>
+        ) : page === 'Clients' ? (
+                    <Suspense fallback={<p role="status">Loading clients...</p>}><ClientsPage /></Suspense>
+        ) : page === 'Permissions' ? (
+                    <PermissionsPage />
         ) : (
             <Card>
               <CardHeader>

@@ -23,6 +23,11 @@ import java.util.List;
 @RestControllerAdvice(basePackages = "kh.edu.istad.platform.iam.rest")
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(kh.edu.istad.platform.iam.application.exception.ClientNotFoundException.class)
+    public ProblemDetail handleClientNotFound(kh.edu.istad.platform.iam.application.exception.ClientNotFoundException exception, WebRequest request) {
+        return problem(HttpStatus.NOT_FOUND, "not-found", "Not Found", exception.getMessage(), "NOT_FOUND", request);
+    }
+
     @ExceptionHandler(ResourceConflictException.class)
     public ProblemDetail handleResourceConflict(ResourceConflictException exception, WebRequest request) {
         return problem(HttpStatus.CONFLICT, "conflict", "Conflict", exception.getMessage(), "CONFLICT", request);

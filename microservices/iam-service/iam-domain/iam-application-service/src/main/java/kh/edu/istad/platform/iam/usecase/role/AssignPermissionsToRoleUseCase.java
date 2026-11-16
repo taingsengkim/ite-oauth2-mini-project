@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.role;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.dto.role.AssignPermissionsToRoleCommand;
 import kh.edu.istad.platform.iam.dto.role.PermissionAssignmentResult;
@@ -15,6 +18,7 @@ public class AssignPermissionsToRoleUseCase {
     private final RoleRepository repository;
     private final RolePermissionAssignmentService assignmentService;
     @Transactional
+    @Audited(action = AuditAction.ROLE_PERMISSIONS_ASSIGNED, target = "#p0.roleUuid()", related = "#p0.permissionUuids()", expiry = "#p0.expiresAt()")
     public java.util.List<PermissionAssignmentResult> execute(AssignPermissionsToRoleCommand command) {
         Role role = repository.findByUuidForUpdate(command.roleUuid())
                 .orElseThrow(() -> new ResourceNotFoundException("Role", command.roleUuid()));

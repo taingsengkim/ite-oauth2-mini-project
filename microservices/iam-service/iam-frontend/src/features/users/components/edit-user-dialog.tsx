@@ -1,153 +1,41 @@
-import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
-
+import { useEffect, useState } from 'react'
+import { ManagementDialog } from '@/components/shared/management-dialog'
+import { FormField, FormError } from '@/components/shared/form-field'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ApiError } from '@/lib/api-client'
+import { useSchemaForm } from '@/lib/forms'
+import { editUserSchema } from '@/lib/form-schemas'
 import { getUser, updateUser } from '../api/users-api'
-import type { UpdateUserInput, UserDetails } from '../types/types'
+import type { UserDetails } from '../types/types'
 
-type EditUserDialogProps = {
-  uuid: string
-  onClose: () => void
-  onSaved: (user: UserDetails) => void
-}
-
-const fields = [
-  { name: 'givenName', label: 'Given name', required: true, max: 100, type: 'text' },
-  { name: 'familyName', label: 'Family name', required: true, max: 100, type: 'text' },
-  { name: 'nickname', label: 'Nickname', required: false, max: 100, type: 'text' },
-  { name: 'phoneNumber', label: 'Phone number', required: false, max: 16, type: 'tel' },
-] as const
-
-export function EditUserDialog({ uuid, onClose, onSaved }: EditUserDialogProps) {
+type Props = { uuid: string; onClose: () => void; onSaved: (user: UserDetails) => void }
+export function EditUserDialog({ uuid, onClose, onSaved }: Props) {
   const [user, setUser] = useState<UserDetails | null>(null)
-  const [values, setValues] = useState<UpdateUserInput | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [retryKey, setRetryKey] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [saving, setSaving] = useState(false)
-  const inFlight = useRef(false)
-
+  const [retry, setRetry] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
-    getUser(uuid, controller.signal).then((result) => {
-      if (controller.signal.aborted) return
-      setUser(result)
-      setValues({
-        givenName: result.givenName, familyName: result.familyName,
-        nickname: result.nickname || '', phoneNumber: result.phoneNumber || '',
-        locale: result.locale === 'km' ? 'km' : 'en',
-      })
-    }).catch((failure: unknown) => {
-      if (!controller.signal.aborted) {
-        setLoadError(failure instanceof Error ? failure.message : 'Could not load user.')
-      }
-    })
+    getUser(uuid, controller.signal).then((value) => { if (!controller.signal.aborted) setUser(value) })
+      .catch((failure: unknown) => { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'Could not load user.') })
     return () => controller.abort()
-  }, [uuid, retryKey])
-
-  function change(name: keyof UpdateUserInput, value: string) {
-    setValues((current) => current ? { ...current, [name]: value } : current)
-    setErrors((current) => ({ ...current, [name]: '' }))
-    setError(null)
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!values || inFlight.current) return
-    const invalid: Record<string, string> = {}
-    if (!values.givenName.trim()) invalid.givenName = 'Given name is required.'
-    if (!values.familyName.trim()) invalid.familyName = 'Family name is required.'
-    if (Object.keys(invalid).length) {
-      setErrors(invalid)
-      setError('Please correct the highlighted fields.')
-      return
-    }
-
-    inFlight.current = true
-    setSaving(true)
-    setError(null)
-    setErrors({})
-    try {
-      const updated = await updateUser(uuid, {
-        ...values, givenName: values.givenName.trim(), familyName: values.familyName.trim(),
-        nickname: values.nickname.trim(), phoneNumber: values.phoneNumber.trim(),
-      })
-      onSaved(updated)
-    } catch (failure) {
-      if (failure instanceof ApiError) setErrors(failure.fieldErrors)
-      setError(failure instanceof Error ? failure.message : 'Could not save user.')
-    } finally {
-      inFlight.current = false
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Dialog.Root open onOpenChange={(open) => { if (!open && !inFlight.current) onClose() }}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-background p-6 text-foreground shadow-xl">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div className="space-y-2">
-              <Dialog.Title className="text-lg font-semibold">Edit user</Dialog.Title>
-              <Dialog.Description className="text-sm text-muted-foreground">
-                Update profile and contact details. Required fields are marked with *.
-              </Dialog.Description>
-            </div>
-            <Dialog.Close disabled={saving} render={<Button type="button" variant="outline" />}>Close</Dialog.Close>
-          </div>
-
-          {loadError ? (
-            <div role="alert" className="space-y-3">
-              <p className="text-sm text-destructive">{loadError}</p>
-              <Button variant="outline" onClick={() => { setLoadError(null); setRetryKey((key) => key + 1) }}>Retry</Button>
-            </div>
-          ) : !values || !user ? (
-            <p role="status" className="py-8 text-sm text-muted-foreground">Loading user...</p>
-          ) : (
-            <form onSubmit={(event) => void submit(event)} className="space-y-5" aria-busy={saving}>
-              <div className="rounded-lg bg-muted/40 p-3 text-sm">
-                <p className="font-medium">{user.username}</p>
-                <p className="break-words text-muted-foreground">{user.email}</p>
-              </div>
-              {error && <p role="alert" className="rounded-md border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
-
-              <fieldset disabled={saving} className="grid gap-4 sm:grid-cols-2">
-                <legend className="sr-only">User profile</legend>
-                {fields.map((field) => (
-                  <div key={field.name} className="space-y-2">
-                    <label htmlFor={`edit-${field.name}`} className="text-sm font-medium">{field.label}{field.required ? ' *' : ''}</label>
-                    <Input id={`edit-${field.name}`} name={field.name} type={field.type}
-                      value={values[field.name]} required={field.required} maxLength={field.max} autoComplete="off"
-                      pattern={field.name === 'phoneNumber' ? '\\+[1-9][0-9]{1,14}' : undefined}
-                      placeholder={field.name === 'phoneNumber' ? '+85512345678' : undefined}
-                      onChange={(event) => change(field.name, event.target.value)}
-                      aria-invalid={Boolean(errors[field.name])}
-                      aria-describedby={errors[field.name] ? `edit-error-${field.name}` : undefined} />
-                    {errors[field.name] && <p id={`edit-error-${field.name}`} className="text-xs text-destructive">{errors[field.name]}</p>}
-                  </div>
-                ))}
-                <div className="space-y-2">
-                  <label htmlFor="edit-locale" className="text-sm font-medium">Language *</label>
-                  <select id="edit-locale" name="locale" value={values.locale}
-                    onChange={(event) => change('locale', event.target.value)}
-                    className="h-8 w-full rounded-md border bg-background px-2 text-sm">
-                    <option value="en">English</option><option value="km">Khmer</option>
-                  </select>
-                </div>
-              </fieldset>
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <Dialog.Close disabled={saving} render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
-                <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save changes'}</Button>
-              </div>
-            </form>
-          )}
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
-  )
+  }, [uuid, retry])
+  if (!user) return <ManagementDialog title="Edit user" description="Load profile and contact details." onClose={onClose}>
+    {error ? <div className="space-y-3"><FormError message={error} /><Button variant="outline" onClick={() => { setError(null); setRetry((value) => value + 1) }}>Retry</Button></div> : <p role="status">Loading user...</p>}
+  </ManagementDialog>
+  return <EditUserForm user={user} onClose={onClose} onSaved={onSaved} />
+}
+function EditUserForm({ user, onClose, onSaved }: { user: UserDetails; onClose: () => void; onSaved: Props['onSaved'] }) {
+  const form = useSchemaForm(editUserSchema, { givenName: user.givenName, familyName: user.familyName, nickname: user.nickname || '', phoneNumber: user.phoneNumber || '', locale: user.locale === 'km' ? 'km' : 'en' })
+  const busy = form.formState.isSubmitting
+  return <ManagementDialog title="Edit user" description="Update profile and contact details. Required fields are marked with *." busy={busy} onClose={onClose}>
+    <form noValidate className="space-y-5" onSubmit={form.submit(async (values) => onSaved(await updateUser(user.uuid, values)))} aria-busy={busy}>
+      <div className="rounded-lg bg-muted/40 p-3 text-sm"><p className="font-medium">{user.username}</p><p className="break-words text-muted-foreground">{user.email}</p></div>
+      <FormError message={form.formState.errors.root?.server?.message} />
+      <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">
+        <FormField form={form} name="givenName" label="Given name *" /><FormField form={form} name="familyName" label="Family name *" />
+        <FormField form={form} name="nickname" label="Nickname" /><FormField form={form} name="phoneNumber" label="Phone number" type="tel" placeholder="+85512345678" />
+        <FormField form={form} name="locale" label="Language *" as="select" options={[{ value: 'en', label: 'English' }, { value: 'km', label: 'Khmer' }]} />
+      </fieldset>
+      <div className="flex justify-end gap-2 border-t pt-4"><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button><Button type="submit" disabled={busy}>{busy ? 'Saving...' : 'Save changes'}</Button></div>
+    </form>
+  </ManagementDialog>
 }

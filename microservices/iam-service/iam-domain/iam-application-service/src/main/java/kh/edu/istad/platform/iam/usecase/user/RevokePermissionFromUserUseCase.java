@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.port.out.CurrentActorProvider;
 import kh.edu.istad.platform.iam.port.out.user.UserPermissionAssignmentRepository;
@@ -21,6 +24,7 @@ public class RevokePermissionFromUserUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_PERMISSION_REVOKED, target = "#p0", related = "#p1")
     public void execute(
             UUID userUuid,
             UUID permissionUuid,

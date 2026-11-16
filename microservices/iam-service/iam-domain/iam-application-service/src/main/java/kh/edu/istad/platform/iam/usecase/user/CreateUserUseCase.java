@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceConflictException;
 import kh.edu.istad.platform.iam.dto.user.AssignRolesToUserCommand;
 import kh.edu.istad.platform.iam.dto.user.CreateUserCommand;
@@ -35,6 +38,7 @@ public class CreateUserUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_CREATED, target = "#result.uuid()")
     public UserResult execute(CreateUserCommand command) {
         Objects.requireNonNull(command, "command");
 

@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.role;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.dto.role.RoleResult;
 import kh.edu.istad.platform.iam.dto.role.UpdateRoleCommand;
@@ -20,6 +23,7 @@ public class UpdateRoleUseCase {
     private final Clock clock;
     private final RoleApplicationMapper mapper;
     @Transactional
+    @Audited(action = AuditAction.ROLE_UPDATED, target = "#p0.uuid()", fields = {"name", "description"})
     public RoleResult execute(UpdateRoleCommand command) {
         Role role = repository.findByUuidForUpdate(command.uuid())
                 .orElseThrow(() -> new ResourceNotFoundException("Role", command.uuid()));

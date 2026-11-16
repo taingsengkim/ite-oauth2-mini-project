@@ -17,6 +17,7 @@ public class IamUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String usernameOrEmail) {
         try {
             return new IamUserDetails(loadUser.execute(usernameOrEmail));
+
         } catch (AuthenticationFailedException exception) {
             throw new UsernameNotFoundException("Invalid username or password", exception);
         }

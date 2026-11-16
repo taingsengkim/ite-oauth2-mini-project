@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.dto.user.UpdateUserProfileCommand;
 import kh.edu.istad.platform.iam.dto.user.UserResult;
@@ -22,6 +25,7 @@ public class UpdateUserProfileUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_UPDATED, target = "#p0.uuid()", fields = {"givenName", "familyName", "nickname", "locale", "phoneNumber"})
     public UserResult execute(UpdateUserProfileCommand command) {
         var user = repository.findByUuidForUpdate(command.uuid())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.uuid()));

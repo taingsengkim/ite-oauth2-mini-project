@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.dto.user.AssignRolesToUserCommand;
 import kh.edu.istad.platform.iam.dto.user.RoleAssignmentResult;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,7 @@ public class UpdateUserRoleAssignmentUseCase {
 
     /** Keeps assignment history and rolls back the revocation if reassignment fails. */
     @Transactional
+    @Audited(action = AuditAction.USER_ROLE_UPDATED, target = "#p0", related = "#p1", expiry = "#p2")
     public RoleAssignmentResult execute(UUID userUuid, UUID roleUuid, Instant expiresAt, String reason) {
         revoke.execute(userUuid, roleUuid, reason);
         return assign.execute(new AssignRolesToUserCommand(userUuid, List.of(roleUuid), expiresAt, reason)).getFirst();

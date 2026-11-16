@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.role;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.model.Role;
 import kh.edu.istad.platform.iam.port.out.*;
@@ -17,6 +20,7 @@ public class DeactivateRoleUseCase {
     private final CurrentActorProvider actorProvider;
     private final Clock clock;
     @Transactional
+    @Audited(action = AuditAction.ROLE_DEACTIVATED, target = "#p0")
     public void execute(UUID uuid) {
         Role role = repository.findByUuidForUpdate(uuid).orElseThrow(() -> new ResourceNotFoundException("Role", uuid));
         role.deactivate(actorProvider.currentActor(), clock.instant());

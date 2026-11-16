@@ -1,4 +1,7 @@
 import {
+    Settings,
+    ClipboardList,
+    AppWindow,
     KeyRound,
     LayoutDashboard,
     Shield,
@@ -12,6 +15,9 @@ const navigation = [
     { name: 'Users', icon: Users },
     { name: 'Roles', icon: Shield },
     { name: 'Permissions', icon: KeyRound },
+    { name: 'Clients', icon: AppWindow },
+    { name: 'Audit Logs', icon: ClipboardList },
+    { name: 'System Configuration', icon: Settings },
 ] as const
 
 export type DashboardPage =

@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.permission;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.dto.permission.CreatePermissionCommand;
 import kh.edu.istad.platform.iam.dto.permission.PermissionResult;
 import kh.edu.istad.platform.iam.mapper.permission.PermissionApplicationMapper;
@@ -20,6 +23,7 @@ public class CreatePermissionUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.PERMISSION_CREATED, target = "#result.uuid()")
     public PermissionResult execute(CreatePermissionCommand command) {
         var permission = Permission.create(command.resource(), command.action(), command.description(),
                 actorProvider.currentActor(), clock.instant());

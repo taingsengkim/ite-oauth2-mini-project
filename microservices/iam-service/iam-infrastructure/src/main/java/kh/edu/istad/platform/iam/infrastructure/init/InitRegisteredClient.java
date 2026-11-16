@@ -28,11 +28,11 @@ public class InitRegisteredClient implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        var existing = clients.findByClientId("oidc-client");
-
-        RegisteredClient.Builder builder = existing == null
-                ? RegisteredClient.withId(UUID.randomUUID().toString())
-                : RegisteredClient.from(existing);
+        if (clients.findByClientId("oidc-client") != null) {
+            initializeRegistrationClient();
+            return;
+        }
+        RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString());
 
         var tokenSettings = TokenSettings.builder()
                 .accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)

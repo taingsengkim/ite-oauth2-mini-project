@@ -11,15 +11,15 @@ const actions = {
   },
   disable: {
     label: 'Deactivate', result: 'deactivated',
-    description: 'Block new sign-ins for this account. Existing sessions are not terminated by this action.',
+    description: 'Block new sign-ins for this account. Existing browser sessions will be terminated.',
   },
   lock: {
     label: 'Lock', result: 'locked',
-    description: 'Prevent new sign-ins until an administrator unlocks this account. Existing sessions are not terminated by this action.',
+    description: 'Prevent new sign-ins until an administrator unlocks this account. Existing browser sessions will be terminated.',
   },
   unlock: {
     label: 'Unlock', result: 'unlocked',
-    description: 'Remove the account lock and reset failed login attempts. A deactivated account must also be activated to sign in.',
+    description: 'Remove the manual account lock and any temporary password lockout, and reset failed login attempts. A deactivated account must also be activated to sign in.',
   },
 } as const
 

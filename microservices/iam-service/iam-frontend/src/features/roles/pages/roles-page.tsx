@@ -1,7 +1,7 @@
+import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { getDashboardSession } from '@/lib/api-client'
@@ -16,7 +16,6 @@ const noAccess: RoleAccess = { create: false, update: false, delete: false, assi
 export function RolesPage() {
   const [access, setAccess] = useState(noAccess)
   const [sessionError, setSessionError] = useState<string | null>(null)
-  const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState({ page: 0, search: '', active: '' })
   const [revision, setRevision] = useState(0)
   const [result, setResult] = useState<{ key: string; data?: Page<RoleSummary>; error?: string } | null>(null)
@@ -68,16 +67,11 @@ export function RolesPage() {
     {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => { event.preventDefault(); setQuery((current) => ({ ...current, page: 0, search: searchInput.trim() })) }}>
-        <div className="space-y-2"><label htmlFor="role-search" className="text-sm font-medium">Search roles</label>
-          <Input id="role-search" type="search" placeholder="Name or description..." maxLength={255} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} /></div>
-        <Button type="submit" variant="outline">Search</Button>
-        <div className="space-y-2"><label htmlFor="role-status" className="block text-sm font-medium">Status</label>
+      <SearchForm label="Search roles" onSearch={(value) => { setQuery((current) => ({ ...current, page: 0, search: value })) }}><div className="space-y-2"><label htmlFor="role-status" className="block text-sm font-medium">Status</label>
           <select id="role-status" className="h-8 rounded-md border bg-background px-2 text-sm" value={query.active}
             onChange={(event) => setQuery((current) => ({ ...current, page: 0, active: event.target.value }))}>
             <option value="">All roles</option><option value="true">Active</option><option value="false">Inactive</option>
-          </select></div>
-      </form>
+          </select></div></SearchForm>
       {access.create && <Button onClick={() => { setSuccess(null); setEditor({}) }}>Create role</Button>}
     </div>
     {loading ? <p role="status" className="py-8 text-sm text-muted-foreground">Loading roles...</p>

@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.port.out.CurrentActorProvider;
 import kh.edu.istad.platform.iam.port.out.user.UserRepository;
@@ -15,15 +18,18 @@ import java.util.UUID;
 public class DisableUserUseCase {
 
     private final UserRepository repository;
+    private final kh.edu.istad.platform.iam.port.out.user.UserSessions sessions;
     private final CurrentActorProvider actorProvider;
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_DISABLED, target = "#p0")
     public void execute(UUID uuid) {
         var user = repository.findByUuidForUpdate(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("User", uuid));
 
         user.disable(actorProvider.currentActor(), clock.instant());
         repository.updateAccountState(user);
+        sessions.terminateAll(uuid);
     }
 }

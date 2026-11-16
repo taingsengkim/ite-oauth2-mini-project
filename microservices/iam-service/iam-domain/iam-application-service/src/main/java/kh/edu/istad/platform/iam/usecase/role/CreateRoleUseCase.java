@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.role;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.dto.role.CreateRoleCommand;
 import kh.edu.istad.platform.iam.dto.role.RoleResult;
 import kh.edu.istad.platform.iam.mapper.role.RoleApplicationMapper;
@@ -20,6 +23,7 @@ public class CreateRoleUseCase {
     private final RoleApplicationMapper mapper;
     private final RolePermissionAssignmentService assignmentService;
     @Transactional
+    @Audited(action = AuditAction.ROLE_CREATED, target = "#result.uuid()", related = "#p0.permissionUuids()")
     public RoleResult execute(CreateRoleCommand command) {
         Role role = repository.create(Role.create(command.name(), command.description(),
                 actorProvider.currentActor(), clock.instant()));

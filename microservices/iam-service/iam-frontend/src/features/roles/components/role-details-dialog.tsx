@@ -1,7 +1,11 @@
+import { selectionSchema } from '@/lib/form-schemas'
+import { useWatch } from 'react-hook-form'
+import { useSchemaForm } from '@/lib/forms'
+import { FormError } from '@/components/shared/form-field'
+import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { getRole, getRolePermissions, listPermissions, assignPermissions, revokePermission } from '../api/roles-api'
 import type { Role, RoleAccess, AssignedPermission, Permission, Page } from '../types'
 import { RoleModal } from './role-modal'
@@ -15,9 +19,10 @@ export function RoleDetailsDialog({ uuid, access, onClose, onChanged }: {
   const [retry, setRetry] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selected, setSelected] = useState<string[]>([])
+  const assignment = useSchemaForm(selectionSchema, { selected: [] })
+  const selected = useWatch({ control: assignment.control, name: 'selected' })
+  function setSelected(value: string[] | ((current: string[]) => string[])) { assignment.setValue('selected', typeof value === 'function' ? value(assignment.getValues('selected')) : value, { shouldDirty: true, shouldValidate: assignment.formState.isSubmitted }) }
   const [removing, setRemoving] = useState<string | null>(null)
-  const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState({ page: 0, search: '' })
   const [catalogue, setCatalogue] = useState<{ key: string; data?: Page<Permission>; error?: string } | null>(null)
   const pending = useRef(false)
@@ -55,7 +60,7 @@ export function RoleDetailsDialog({ uuid, access, onClose, onChanged }: {
     try {
       await operation()
       saved = true
-      setSelected([])
+      assignment.reset({ selected: [] })
       setRemoving(null)
       onChanged('Role permissions updated successfully. Changes apply to future sign-ins.')
       const [role, permissions] = await Promise.all([getRole(uuid), getRolePermissions(uuid)])
@@ -110,11 +115,7 @@ export function RoleDetailsDialog({ uuid, access, onClose, onChanged }: {
       {canAssign && !access.browsePermissions && <p className="text-sm text-muted-foreground">Permission browsing requires permission:read access.</p>}
       {canBrowse && <section aria-label="Available permissions" className="space-y-3 border-t pt-4">
         <h3 className="font-medium">Add permissions</h3>
-        <form className="flex gap-2" onSubmit={(event) => { event.preventDefault(); setQuery({ page: 0, search: searchInput.trim() }) }}>
-          <Input aria-label="Search available permissions" placeholder="Search permissions..." maxLength={255} value={searchInput}
-            disabled={busy} onChange={(event) => setSearchInput(event.target.value)} />
-          <Button type="submit" variant="outline" disabled={busy}>Search</Button>
-        </form>
+        <SearchForm label="Search available permissions" disabled={busy} onSearch={(value) => { setQuery((current) => ({ ...current, page: 0, search: value })) }} />
         {catalogueLoading ? <p role="status" className="text-sm">Loading permissions...</p>
           : catalogue?.error ? <p role="alert" className="text-sm text-destructive">{catalogue.error} <Button variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>Retry</Button></p>
           : catalogue?.data && <>
@@ -135,7 +136,8 @@ export function RoleDetailsDialog({ uuid, access, onClose, onChanged }: {
                 <Button size="sm" variant="outline" disabled={busy || query.page + 1 >= catalogue.data.page.totalPages} onClick={() => setQuery((current) => ({ ...current, page: current.page + 1 }))}>Next</Button></div>
             </div>
           </>}
-        <Button disabled={busy || !selected.length} onClick={() => void change(() => assignPermissions(uuid, selected))}>
+        <FormError message={assignment.formState.errors.selected?.message} />
+        <Button disabled={busy || assignment.formState.isSubmitting} onClick={(event) => void assignment.submit(async (values) => { await change(() => assignPermissions(uuid, values.selected)) })(event)}>
           {busy ? 'Updating...' : `Assign selected (${selected.length})`}
         </Button>
       </section>}

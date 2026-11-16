@@ -14,6 +14,8 @@ public class RecordLoginAttemptUseCase {
 
     private final UserRepository repository;
     private final Clock clock;
+    private final kh.edu.istad.platform.iam.port.out.user.LoginLockoutRepository lockouts;
+    private final kh.edu.istad.platform.iam.port.out.configuration.SystemConfigurationRepository configuration;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void execute(String usernameOrEmail, boolean success) {
@@ -32,8 +34,11 @@ public class RecordLoginAttemptUseCase {
 
         if (success) {
             user.recordSuccessfulLogin("system", now);
+            lockouts.clear(user.getUuid());
         } else {
             user.recordFailedLogin("system", now);
+            var policy = configuration.current().policy();
+            lockouts.recordFailure(user.getUuid(), policy.maxFailedLoginAttempts(), policy.lockoutDurationSeconds(), now);
         }
 
         repository.updateLoginMetadata(user);

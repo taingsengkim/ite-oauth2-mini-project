@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.permission;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.dto.permission.PermissionResult;
 import kh.edu.istad.platform.iam.dto.permission.UpdatePermissionCommand;
@@ -24,6 +27,7 @@ public class UpdatePermissionUseCase {
 
 
     @Transactional
+    @Audited(action = AuditAction.PERMISSION_UPDATED, target = "#p0.uuid()", fields = {"resource", "action", "description"})
     public PermissionResult execute(UpdatePermissionCommand command) {
 
         Permission permission = permissionRepository.findByUuid(command.uuid())

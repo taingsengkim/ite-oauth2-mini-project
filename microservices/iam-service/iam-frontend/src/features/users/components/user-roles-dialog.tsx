@@ -1,19 +1,17 @@
+import { assignmentSchema, expirySchema, toExpiry } from '@/lib/form-schemas'
+import { useWatch } from 'react-hook-form'
+import { useSchemaForm } from '@/lib/forms'
+import { FormField, FormError } from '@/components/shared/form-field'
+import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { listRoles } from '@/features/roles/api/roles-api'
 import type { Page, RoleSummary } from '@/features/roles/types'
 import { getUserRoles, assignUserRoles, changeUserRoleExpiry, revokeUserRole } from '../api/user-roles-api'
 import type { AssignedUserRole, User } from '../types/types'
 
-function expiry(value: string): string | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (!Number.isFinite(date.getTime()) || date.getTime() <= Date.now()) throw new Error('Choose an expiration time in the future, or leave it empty for permanent access.')
-  return date.toISOString()
-}
 
 function localTime(value: string | null) {
   if (!value) return ''
@@ -29,13 +27,14 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
   const [retry, setRetry] = useState(0)
   const [catalogue, setCatalogue] = useState<{ key: string; data?: Page<RoleSummary>; error?: string } | null>(null)
   const [query, setQuery] = useState({ page: 0, search: '', active: 'true' })
-  const [searchInput, setSearchInput] = useState('')
-  const [selected, setSelected] = useState<string[]>([])
-  const [expiresAt, setExpiresAt] = useState('')
-  const [reason, setReason] = useState('')
+  const assignment = useSchemaForm(assignmentSchema, { selected: [], expiresAt: '', reason: '' })
+  const selected = useWatch({ control: assignment.control, name: 'selected' })
+  function setSelected(value: string[] | ((current: string[]) => string[])) { assignment.setValue('selected', typeof value === 'function' ? value(assignment.getValues('selected')) : value, { shouldDirty: true, shouldValidate: assignment.formState.isSubmitted }) }
+
+
   const [removing, setRemoving] = useState<AssignedUserRole | null>(null)
   const [editing, setEditing] = useState<AssignedUserRole | null>(null)
-  const [editExpiry, setEditExpiry] = useState('')
+  const expiryForm = useSchemaForm(expirySchema, { expiresAt: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const pending = useRef(false)
@@ -72,11 +71,9 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
     try {
       await operation()
       saved = true
-      setSelected([])
+      assignment.reset({ selected: [], expiresAt: '', reason: '' })
       setRemoving(null)
       setEditing(null)
-      setExpiresAt('')
-      setReason('')
       onChanged(message)
       setAssigned(await getUserRoles(user.uuid))
     } catch (failure) {
@@ -115,14 +112,13 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
                     <p className="text-xs text-muted-foreground">Assigned by {role.assignedBy} · {new Date(role.assignedAt).toLocaleString()}</p>
                   </div>
                   <div className="flex gap-2"><Button size="sm" variant="outline" disabled={busy || isSelf || !role.active}
-                    onClick={() => { setError(null); setRemoving(null); setEditing(role); setEditExpiry(role.expired ? '' : localTime(role.expiresAt)) }}>Change expiry</Button>
+                    onClick={() => { setError(null); setRemoving(null); setEditing(role); expiryForm.reset({ expiresAt: role.expired ? '' : localTime(role.expiresAt) }) }}>Change expiry</Button>
                     <Button size="sm" variant="outline" disabled={busy || isSelf} onClick={() => { setError(null); setEditing(null); setRemoving(role) }}>Revoke</Button></div>
                 </div>
                 {editing?.uuid === role.uuid && <div className="space-y-3 border-t pt-3">
-                  <label htmlFor="role-edit-expiry" className="block text-sm">Expiration (local time; leave empty for permanent access)</label>
-                  <Input id="role-edit-expiry" type="datetime-local" value={editExpiry} disabled={busy} onChange={(event) => setEditExpiry(event.target.value)} />
+                  <FormField form={expiryForm} name="expiresAt" label="Expiration (local time; leave empty for permanent access)" type="datetime-local" disabled={busy} />
                   <div className="flex gap-2"><Button size="sm" variant="outline" disabled={busy} onClick={() => setEditing(null)}>Cancel</Button>
-                    <Button size="sm" disabled={busy} onClick={() => void perform(() => changeUserRoleExpiry(user.uuid, role.uuid, expiry(editExpiry)), `Assignment for ${role.name} updated successfully.`)}>Save expiry</Button></div>
+                    <Button size="sm" disabled={busy} onClick={(event) => void expiryForm.submit(async (values) => { await perform(() => changeUserRoleExpiry(user.uuid, role.uuid, toExpiry(values.expiresAt)), `Assignment for ${role.name} updated successfully.`) })(event)}>Save expiry</Button></div>
                 </div>}
                 {removing?.uuid === role.uuid && <div className="space-y-2 border-t pt-3"><p className="text-sm">Revoke {role.name} from {user.username}?</p>
                   <div className="flex gap-2"><Button size="sm" variant="outline" disabled={busy} onClick={() => setRemoving(null)}>Cancel</Button>
@@ -132,10 +128,7 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
             </section>
             {!canBrowse ? <p className="text-sm text-muted-foreground">Browsing additional roles requires role:read access.</p> : <section aria-label="Available user roles" className="space-y-3 border-t pt-4">
               <h3 className="font-medium">Assign additional roles</h3>
-              <form className="flex gap-2" onSubmit={(event) => { event.preventDefault(); setQuery({ page: 0, search: searchInput.trim(), active: 'true' }) }}>
-                <Input aria-label="Search available roles" placeholder="Search active roles..." maxLength={255} value={searchInput} disabled={busy} onChange={(event) => setSearchInput(event.target.value)} />
-                <Button type="submit" variant="outline" disabled={busy}>Search</Button>
-              </form>
+              <SearchForm label="Search available roles" disabled={busy} onSearch={(value) => { setQuery({ page: 0, search: value, active: 'true' }) }} />
               {catalogue?.key !== queryKey ? <p role="status" className="text-sm">Loading roles...</p>
                 : catalogue.error ? <div role="alert" className="space-y-2 text-sm text-destructive">{catalogue.error}<Button size="sm" variant="outline" onClick={() => setRetry((value) => value + 1)}>Retry</Button></div>
                   : catalogue.data && <>
@@ -150,13 +143,11 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
                       <Button size="sm" variant="outline" disabled={busy || !query.page} onClick={() => setQuery((current) => ({ ...current, page: current.page - 1 }))}>Previous</Button>
                       <Button size="sm" variant="outline" disabled={busy || query.page + 1 >= catalogue.data.page.totalPages} onClick={() => setQuery((current) => ({ ...current, page: current.page + 1 }))}>Next</Button></div></div>
                   </>}
-              <div className="grid gap-3 sm:grid-cols-2"><div className="space-y-2"><label htmlFor="role-assign-expiry" className="text-sm">Expiration (optional, local time)</label>
-                <Input id="role-assign-expiry" type="datetime-local" value={expiresAt} disabled={busy} onChange={(event) => setExpiresAt(event.target.value)} /></div>
-                <div className="space-y-2"><label htmlFor="role-assign-reason" className="text-sm">Reason (optional)</label>
-                  <Input id="role-assign-reason" maxLength={255} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} /></div></div>
-              <Button disabled={busy || !selected.length} onClick={() => void perform(() => assignUserRoles(user.uuid, selected, expiry(expiresAt), reason.trim() || 'Assigned from dashboard'), 'User roles assigned successfully.')}>
-                {busy ? 'Updating...' : `Assign selected (${selected.length})`}
-              </Button>
+              <form noValidate className="space-y-3" onSubmit={(event) => void assignment.submit(async (values) => { await perform(() => assignUserRoles(user.uuid, values.selected, toExpiry(values.expiresAt), values.reason || 'Assigned from dashboard'), 'User roles assigned successfully.') })(event)}>
+                <div className="grid gap-3 sm:grid-cols-2"><FormField form={assignment} name="expiresAt" label="Expiration (optional, local time)" type="datetime-local" disabled={busy} /><FormField form={assignment} name="reason" label="Reason (optional)" disabled={busy} /></div>
+                <FormError message={assignment.formState.errors.selected?.message} />
+                <Button type="submit" disabled={busy || assignment.formState.isSubmitting}>{busy ? 'Updating...' : 'Assign selected (' + selected.length + ')'}</Button>
+              </form>
             </section>}
           </div>}
       </Dialog.Popup>

@@ -23,10 +23,13 @@ type UsersTableProps = {
     onDeleteUser?: (user: User) => void
     onResetPassword?: (user: User) => void
     onManageRoles?: (user: User) => void
+    onLoginHistory?: (user: User) => void
+    onManageSessions?: (user: User) => void
+    onManagePermissions?: (user: User) => void
     currentUserUuid?: string | null
 }
 
-export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDeleteUser,onResetPassword,onManageRoles,currentUserUuid }: UsersTableProps) {
+export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDeleteUser,onResetPassword,onManageRoles,onManagePermissions,onManageSessions,onLoginHistory,currentUserUuid }: UsersTableProps) {
     return (
         <div className="overflow-hidden rounded-lg border">
             <Table>
@@ -91,7 +94,10 @@ export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDelete
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="min-w-44">
                                             <DropdownMenuItem onClick={() => onViewUser(user.uuid)}>View details</DropdownMenuItem>
+                                            {onLoginHistory && <DropdownMenuItem onClick={() => onLoginHistory(user)}>Login history</DropdownMenuItem>}
+                                            {onManageSessions && <DropdownMenuItem onClick={() => onManageSessions(user)}>View sessions</DropdownMenuItem>}
                                             {onManageRoles && <DropdownMenuItem onClick={() => onManageRoles(user)}>Manage roles</DropdownMenuItem>}
+                                            {onManagePermissions && <DropdownMenuItem onClick={() => onManagePermissions(user)}>Manage permissions</DropdownMenuItem>}
                                             {onEditUser && <DropdownMenuItem onClick={() => onEditUser(user.uuid)}>Edit profile</DropdownMenuItem>}
                                             {onResetPassword && <DropdownMenuItem onClick={() => onResetPassword(user)}>Reset password</DropdownMenuItem>}
                                             {onStatusAction && <>
@@ -106,6 +112,7 @@ export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDelete
                                                     onClick={() => onStatusAction(user, user.accountNonLocked ? 'lock' : 'unlock')}>
                                                     {user.accountNonLocked ? 'Lock account' : 'Unlock account'}
                                                 </DropdownMenuItem>
+                                                {user.accountNonLocked && <DropdownMenuItem onClick={() => onStatusAction(user, 'unlock')}>Clear password lockout</DropdownMenuItem>}
                                                 {user.uuid === currentUserUuid && <p className="px-2 py-1 text-xs text-muted-foreground">You cannot restrict your own account.</p>}
                                             </>}
                                             {onDeleteUser && <>

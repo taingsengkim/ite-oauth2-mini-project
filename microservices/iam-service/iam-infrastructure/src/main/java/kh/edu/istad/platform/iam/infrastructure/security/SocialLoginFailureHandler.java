@@ -18,6 +18,7 @@ import java.util.UUID;
 public class SocialLoginFailureHandler implements AuthenticationFailureHandler {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SocialLoginFailureHandler.class);
     private final Clock clock;
+    private final LoginHistoryRecorder loginHistory;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
@@ -32,6 +33,7 @@ public class SocialLoginFailureHandler implements AuthenticationFailureHandler {
             response.sendRedirect("/register/complete");
             return;
         }
+        loginHistory.socialFailure(request, exception);
         log.warn("Social authentication failed", exception);
         if (exception instanceof OAuth2AuthenticationException oauth) {
             String code = oauth.getError().getErrorCode();

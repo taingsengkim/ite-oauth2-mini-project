@@ -54,6 +54,12 @@ export type AssignedUserRole = {
   expired: boolean
 }
 
+export type PermissionEffect = 'GRANT' | 'DENY'
+export type DirectUserPermission = {
+  uuid: string; name: string; resource: string; action: string; active: boolean; effect: PermissionEffect
+  assignedAt: string; assignedBy: string; expiresAt: string | null; expired: boolean
+}
+
 export type CreateUserInput = {
   username: string
   email: string

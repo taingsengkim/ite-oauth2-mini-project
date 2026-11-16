@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.dto.user.ResetUserPasswordCommand;
 import kh.edu.istad.platform.iam.port.out.CurrentActorProvider;
@@ -17,12 +20,15 @@ import java.time.Clock;
 public class ResetUserPasswordUseCase {
 
     private final UserRepository repository;
+    private final kh.edu.istad.platform.iam.port.out.user.LoginLockoutRepository lockouts;
+    private final kh.edu.istad.platform.iam.port.out.user.UserSessions sessions;
     private final PasswordHasher passwordHasher;
     private final PasswordPolicy passwordPolicy;
     private final CurrentActorProvider actorProvider;
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_PASSWORD_RESET, target = "#p0.userUuid()")
     public void execute(ResetUserPasswordCommand command) {
         passwordPolicy.validate(
                 command.newPassword(),
@@ -39,5 +45,7 @@ public class ResetUserPasswordUseCase {
         );
 
         repository.updatePassword(user);
+        lockouts.clear(command.userUuid());
+        sessions.terminateAll(command.userUuid());
     }
 }

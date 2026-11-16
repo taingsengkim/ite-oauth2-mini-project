@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LoadUserForAuthenticationUseCase {
     private final UserRepository repository;
+    private final kh.edu.istad.platform.iam.port.out.user.LoginLockoutRepository lockouts;
+    private final java.time.Clock clock;
     private final UserApplicationMapper mapper;
     private final UserAuthorityResolver authorityResolver;
 
@@ -32,6 +34,9 @@ public class LoadUserForAuthenticationUseCase {
             throw new AuthenticationFailedException();
         }
 
-        return mapper.toAuthResult(user, authorityResolver.resolve(user.getUuid()));
+        var result = mapper.toAuthResult(user, authorityResolver.resolve(user.getUuid()));
+        if (lockouts.isLocked(user.getUuid(), clock.instant())) return new AuthUserResult(result.uuid(), result.username(), result.passwordHash(),
+                result.enabled(), result.accountNonExpired(), false, result.credentialsNonExpired(), result.authorities());
+        return result;
     }
 }

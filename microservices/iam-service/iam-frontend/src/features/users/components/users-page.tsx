@@ -1,9 +1,9 @@
+import { SearchForm } from '@/components/shared/search-form'
+import { UserSessionsDialog } from './user-sessions-dialog'
 
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 import { listUsers } from '../api/users-api'
 import { UsersTable } from '../components/users-table'
@@ -17,8 +17,15 @@ import { UserStatusDialog } from './user-status-dialog'
 import { DeleteUserDialog } from './delete-user-dialog'
 import { ResetPasswordDialog } from './reset-password-dialog'
 import { UserRolesDialog } from './user-roles-dialog'
+import { UserPermissionsDialog } from './user-permissions-dialog'
+
+const LoginHistoryDialog = lazy(() => import('./login-history-dialog').then((module) => ({ default: module.LoginHistoryDialog })))
 
 export function UsersPage() {
+    const [historyUser, setHistoryUser] = useState<User | 'all' | null>(null)
+    const [sessionUser, setSessionUser] = useState<User | null>(null)
+    const [canRead, setCanRead] = useState(false)
+    const [searchRevision, setSearchRevision] = useState(0)
     const [createOpen, setCreateOpen] = useState(false)
     const [canCreate, setCanCreate] = useState(false)
     const [canUpdate, setCanUpdate] = useState(false)
@@ -26,6 +33,8 @@ export function UsersPage() {
     const [canAssignRoles, setCanAssignRoles] = useState(false)
     const [canBrowseRoles, setCanBrowseRoles] = useState(false)
     const [roleUser, setRoleUser] = useState<User | null>(null)
+    const [permissionUser, setPermissionUser] = useState<User | null>(null)
+    const [canBrowsePermissions, setCanBrowsePermissions] = useState(false)
     const [deletingUser, setDeletingUser] = useState<User | null>(null)
     const [resettingUser, setResettingUser] = useState<User | null>(null)
     const [editingUuid, setEditingUuid] = useState<string | null>(null)
@@ -39,11 +48,13 @@ export function UsersPage() {
         getDashboardSession(controller.signal)
             .then((session) => {
                 if (!controller.signal.aborted) {
+                    setCanRead(session.authorities.includes('user:read'))
                     setCanCreate(session.authorities.includes('user:create'))
                     setCanUpdate(session.authorities.includes('user:update'))
                     setCanDelete(session.authorities.includes('user:delete'))
                     setCanAssignRoles(session.authorities.includes('user:assign'))
                     setCanBrowseRoles(session.authorities.includes('role:read'))
+                    setCanBrowsePermissions(session.authorities.includes('permission:read'))
                     setCurrentUserUuid(session.userUuid)
                 }
             })
@@ -57,8 +68,6 @@ export function UsersPage() {
 
     const [selectedUserUuid, setSelectedUserUuid] =
         useState<string | null>(null)
-
-    const [searchInput, setSearchInput] = useState('')
     const [search, setSearch] = useState('')
     const [page, setPage] = useState(0)
 
@@ -104,16 +113,11 @@ export function UsersPage() {
         return () => controller.abort()
     }, [page, search, retryKey])
 
-    function handleSearch(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault()
-        setPage(0)
-        setSearch(searchInput.trim())
-    }
 
     function handleCreated(user: UserDetails) {
         setCreateOpen(false)
         setSuccess(`User ${user.username} was created successfully.`)
-        setSearchInput('')
+        setSearchRevision((value) => value + 1)
         setSearch('')
         setPage(0)
         setRetryKey((value) => value + 1)
@@ -145,6 +149,11 @@ export function UsersPage() {
                 </div>
             )}
             {createOpen && <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={handleCreated} />}
+            {canRead && <div className="flex justify-end"><Button variant="outline" onClick={() => setHistoryUser('all')}>All login history</Button></div>}
+            {historyUser && <Suspense fallback={<p role="status">Loading login history?</p>}><LoginHistoryDialog key={historyUser === 'all' ? 'all' : historyUser.uuid} user={historyUser === 'all' ? undefined : historyUser} onClose={() => setHistoryUser(null)} /></Suspense>}
+            {sessionUser && <UserSessionsDialog key={sessionUser.uuid} user={sessionUser} canTerminate={canUpdate} onClose={() => setSessionUser(null)} />}
+            {permissionUser && <UserPermissionsDialog key={permissionUser.uuid} user={permissionUser} canBrowse={canBrowsePermissions} currentUserUuid={currentUserUuid}
+                onClose={() => setPermissionUser(null)} onChanged={(message) => { setSuccess(message); setRetryKey((value) => value + 1) }} />}
             {roleUser && <UserRolesDialog key={roleUser.uuid} user={roleUser} canBrowse={canBrowseRoles} currentUserUuid={currentUserUuid}
                 onClose={() => setRoleUser(null)} onChanged={(message) => { setSuccess(message); setRetryKey((value) => value + 1) }} />}
             {editingUuid && <EditUserDialog key={editingUuid} uuid={editingUuid}
@@ -170,30 +179,7 @@ export function UsersPage() {
                     onClose={() => setSelectedUserUuid(null)}
                 />
             )}
-            <form
-                onSubmit={handleSearch}
-                className="flex flex-wrap items-end gap-3"
-            >
-                <div className="w-full space-y-2 sm:max-w-sm">
-                    <label
-                        htmlFor="user-search"
-                        className="text-sm font-medium"
-                    >
-                        Search users
-                    </label>
-
-                    <Input
-                        id="user-search"
-                        type="search"
-                        placeholder="Search users..."
-                        maxLength={255}
-                        value={searchInput}
-                        onChange={(event) => setSearchInput(event.target.value)}
-                    />
-                </div>
-
-                <Button type="submit">Search</Button>
-            </form>
+            <SearchForm key={searchRevision} label="Search users" onSearch={(value) => { setPage(0); setSearch(value); setRetryKey((current) => current + 1) }} />
 
             {loading && (
                 <p role="status" className="py-8 text-muted-foreground">
@@ -235,6 +221,9 @@ export function UsersPage() {
                         onDeleteUser={canDelete ? (user) => { setSuccess(null); setDeletingUser(user) } : undefined}
                         onResetPassword={canUpdate ? (user) => { setSuccess(null); setResettingUser(user) } : undefined}
                         onManageRoles={canAssignRoles ? (user) => { setSuccess(null); setRoleUser(user) } : undefined}
+                        onLoginHistory={canRead ? (user) => setHistoryUser(user) : undefined}
+                        onManageSessions={canRead ? (user) => setSessionUser(user) : undefined}
+                        onManagePermissions={canAssignRoles ? (user) => { setSuccess(null); setPermissionUser(user) } : undefined}
                         onStatusAction={canUpdate ? (user, action) => { setSuccess(null); setStatusChange({ user, action }) } : undefined}
                     />
                     <div className="flex flex-wrap items-center justify-between gap-3">

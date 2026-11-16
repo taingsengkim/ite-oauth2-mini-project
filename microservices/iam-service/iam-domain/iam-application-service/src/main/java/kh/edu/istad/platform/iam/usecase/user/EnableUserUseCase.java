@@ -1,5 +1,8 @@
 package kh.edu.istad.platform.iam.usecase.user;
 
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+
 import kh.edu.istad.platform.iam.application.exception.ResourceNotFoundException;
 import kh.edu.istad.platform.iam.port.out.CurrentActorProvider;
 import kh.edu.istad.platform.iam.port.out.user.UserRepository;
@@ -19,6 +22,7 @@ public class EnableUserUseCase {
     private final Clock clock;
 
     @Transactional
+    @Audited(action = AuditAction.USER_ENABLED, target = "#p0")
     public void execute(UUID uuid) {
         var user = repository.findByUuidForUpdate(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("User", uuid));
