@@ -7,6 +7,10 @@ import java.util.UUID;
 public record LinkIdentityIntent(
         UUID userUuid,
         String registrationId,
-        Instant expiresAt
+        Instant expiresAt,
+        boolean popup
 ) implements Serializable {
+    public LinkIdentityIntent(UUID userUuid, String registrationId, Instant expiresAt) {
+        this(userUuid, registrationId, expiresAt, false);
+    }
 }

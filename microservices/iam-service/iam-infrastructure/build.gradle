@@ -6,6 +6,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation project(':iam-domain:iam-application-service')
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'com.maxmind.db:maxmind-db:4.2.0'
     implementation 'org.springframework.security:spring-security-crypto'
     implementation 'org.springframework.security:spring-security-core'
     implementation 'org.springframework.security:spring-security-oauth2-jose'

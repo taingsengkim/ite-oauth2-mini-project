@@ -40,6 +40,21 @@ import java.util.Set;
 public class SecurityConfig {
 
     @Bean
+    @Order(0)
+    SecurityFilterChain recoveryApiChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/recovery-api/**")
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/recovery-api/context").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/recovery-api/request", "/recovery-api/reset").permitAll()
+                        .anyRequest().denyAll())
+                .requestCache(org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer::disable)
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, exception) -> response.sendError(401))
+                        .accessDeniedHandler((request, response, exception) -> response.sendError(403)));
+        return http.build();
+    }
+
+    @Bean
     org.springframework.boot.web.servlet.ServletListenerRegistrationBean<BrowserUserSessions> sessionListener(BrowserUserSessions sessions) {
         return new org.springframework.boot.web.servlet.ServletListenerRegistrationBean<>(sessions);
     }
@@ -248,6 +263,18 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/profile").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/security").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/identities").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/sessions").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/login-history").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/activity").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/dashboard-api/account/deactivation").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/dashboard-api/account/deactivation").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/account/sessions", "/dashboard-api/account/sessions/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/dashboard-api/account/identities/*").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/dashboard-api/account/security/password").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/dashboard-api/account/profile").authenticated()
                         .requestMatchers(HttpMethod.GET, "/dashboard-api/session", "/dashboard-api/password-policy", "/dashboard-api/client-defaults").authenticated()
                         .requestMatchers(HttpMethod.GET, "/dashboard-api/configuration").hasAuthority("configuration:read")
                         .requestMatchers(HttpMethod.PUT, "/dashboard-api/configuration").hasAuthority("configuration:update")
@@ -332,7 +359,8 @@ public class SecurityConfig {
                                 registrations.findByRegistrationId("telegram").getRedirectUri()),
                         org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**").permitAll()
+                        .requestMatchers("/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**", "/account/identities/result",
+                                "/dashboard/recovery.html", "/dashboard/assets/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -358,7 +386,8 @@ public class SecurityConfig {
                             if (Boolean.TRUE.equals(request.getAttribute("iam.identityLinked"))) {
                                 new org.springframework.security.web.savedrequest.HttpSessionRequestCache()
                                         .removeRequest(request, response);
-                                response.sendRedirect("/profile/accounts?linked=1");
+                                response.sendRedirect(Boolean.TRUE.equals(request.getAttribute("iam.identityLinkPopup"))
+                                        ? "/account/identities/result" : "/profile/accounts?linked=1");
                             } else {
                                 new org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler()
                                         .onAuthenticationSuccess(request, response, authentication);

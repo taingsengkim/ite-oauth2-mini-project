@@ -21,6 +21,7 @@ public interface UserRepository {
     PageResult<User> findAll(UserFilterQuery query);
 
     User updateProfile(User user);
+    User updateAccountProfile(User user);
 
     void updateAccountState(User user);
 

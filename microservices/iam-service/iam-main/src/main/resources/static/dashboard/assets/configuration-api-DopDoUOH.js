@@ -1,0 +1,1 @@
+import{mt as e,pt as t}from"./form-field-C71qRWqF.js";function n(t){return e(`/dashboard-api/configuration`,{signal:t})}function r(e,n){return t(`/dashboard-api/configuration`,`PUT`,{version:e,policy:n})}function i(t){return e(`/dashboard-api/client-defaults`,{signal:t})}export{n,r,i as t};

@@ -46,7 +46,8 @@ public record UserSnapshot(
         Instant createdAt,
         String createdBy,
         Instant updatedAt,
-        String updatedBy
+        String updatedBy,
+        boolean profilePictureManaged
 ) {
 
     @Override

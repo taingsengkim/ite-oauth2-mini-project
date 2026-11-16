@@ -15,6 +15,8 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class UserEntity extends AuditableEntity {
+    @Column(name = "profile_picture_managed", nullable = false)
+    private boolean profilePictureManaged;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

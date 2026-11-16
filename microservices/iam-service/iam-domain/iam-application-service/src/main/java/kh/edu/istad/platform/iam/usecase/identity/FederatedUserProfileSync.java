@@ -44,7 +44,7 @@ public class FederatedUserProfileSync {
         }
         user.updatePersonalDetails(middle, gender, birthdate, zone, actor, now);
 
-        String picture = missing(user.getPictureUrl()) || Objects.equals(user.getPictureUrl(), previousPicture)
+        String picture = !user.isProfilePictureManaged() && (missing(user.getPictureUrl()) || Objects.equals(user.getPictureUrl(), previousPicture))
                 ? url(command.pictureUrl()) : null;
         user.updateUrls(
                 missing(user.getProfileUrl()) ? url(text(attributes, "profile", 500)) : null,

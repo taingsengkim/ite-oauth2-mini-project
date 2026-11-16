@@ -29,6 +29,7 @@ public class LinkIdentityUseCase {
     private final FederatedUserProfileSync profileSync;
 
     @Transactional
+    @kh.edu.istad.platform.iam.audit.Audited(action = kh.edu.istad.platform.iam.audit.AuditAction.ACCOUNT_IDENTITY_LINKED, target = "#p0")
     public IdentityResult execute(
             UUID userUuid,
             FederatedIdentityCommand command

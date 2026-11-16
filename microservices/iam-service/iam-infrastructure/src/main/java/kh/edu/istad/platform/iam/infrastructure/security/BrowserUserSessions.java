@@ -16,6 +16,7 @@ import kh.edu.istad.platform.iam.port.out.configuration.SystemConfigurationRepos
 @Component
 public class BrowserUserSessions implements UserSessions, HttpSessionListener {
     private final Clock clock;
+    private final kh.edu.istad.platform.iam.port.out.user.IpLocationResolver locations;
     private final SystemConfigurationRepository configuration;
     private final Map<UUID, Entry> entries = new HashMap<>();
     private static final String KEY = BrowserUserSessions.class.getName() + ".id";
@@ -24,7 +25,7 @@ public class BrowserUserSessions implements UserSessions, HttpSessionListener {
     private record Entry(UUID id, UUID user, HttpSession session, Instant signedInAt,
                          Instant lastActiveAt, String ip, String agent) {}
 
-    public BrowserUserSessions(Clock clock, SystemConfigurationRepository configuration) { this.clock = clock; this.configuration = configuration; }
+    public BrowserUserSessions(Clock clock, SystemConfigurationRepository configuration, kh.edu.istad.platform.iam.port.out.user.IpLocationResolver locations) { this.clock = clock; this.configuration = configuration; this.locations = locations; }
 
     void enforceSessionPolicy(HttpServletRequest request) {
         var session = request.getSession(false);
@@ -87,7 +88,7 @@ public class BrowserUserSessions implements UserSessions, HttpSessionListener {
                 Instant expires = timeout <= 0 ? null : Instant.ofEpochMilli(entry.session().getLastAccessedTime()).plusSeconds(timeout);
                 if (expires != null && !expires.isAfter(clock.instant())) { iterator.remove(); continue; }
                 if (entry.user().equals(userUuid)) result.add(new Session(entry.id(), entry.signedInAt(),
-                        entry.lastActiveAt(), expires, entry.ip(), entry.agent(), entry.session().getId().equals(currentSessionId)));
+                        entry.lastActiveAt(), expires, entry.ip(), entry.agent(), entry.session().getId().equals(currentSessionId), locations.resolve(entry.ip())));
             } catch (IllegalStateException ignored) { iterator.remove(); }
         }
         result.sort(Comparator.comparing(Session::lastActiveAt).reversed());

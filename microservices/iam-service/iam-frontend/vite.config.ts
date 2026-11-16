@@ -12,11 +12,17 @@ export default defineConfig({
     },
   },
   build: {
+    rolldownOptions: {
+      input: { dashboard: fileURLToPath(new URL('./index.html', import.meta.url)), recovery: fileURLToPath(new URL('./recovery.html', import.meta.url)) },
+    },
     outDir: '../iam-main/src/main/resources/static/dashboard',
     emptyOutDir: false,
   },
   server: {
     proxy: {
+      '/recovery-api': { target: 'http://localhost:9000', changeOrigin: true },
+      '/account/identities': { target: 'http://localhost:9000', changeOrigin: true },
+      '/oauth2/authorization': { target: 'http://localhost:9000', changeOrigin: true },
       '/dashboard-api': {
         target: 'http://localhost:9000',
         changeOrigin: true,

@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { mutateJson, requestJson } from '@/lib/api-client'
 import type { User } from '../types/types'
+import { locationText } from '@/lib/session-location'
+import type { SessionLocation } from '@/lib/session-location'
 
 type UserSession = {
   id: string; signedInAt: string; lastActiveAt: string; expiresAt: string | null
   ipAddress: string; userAgent: string; current: boolean
+  location?: SessionLocation
 }
 const formatTime = (value: string | null) => value ? new Date(value).toLocaleString() : 'No timeout'
 
@@ -65,5 +68,6 @@ export function UserSessionsDialog({ user, canTerminate, onClose }: {
       {canTerminate && <Button variant="outline" size="sm" disabled={busy} onClick={() => setPending(session)}>Terminate session</Button>}
     </article>)}</div>}
     <p className="mt-4 text-xs text-muted-foreground">Session termination signs out browser sessions. Issued API access tokens remain valid until they expire.</p>
+    <div className="mt-3 space-y-2 text-xs text-muted-foreground">{sessions.map((session) => <p key={session.id}>{session.ipAddress}: {locationText(session.location, 'en') || (session.location?.status === 'LOCAL' ? 'Local device' : session.location?.status === 'PRIVATE' ? 'Private or reserved network' : 'Location unavailable')}</p>)}<p>IP locations are approximate. <a className="underline" href="https://db-ip.com" target="_blank" rel="noopener noreferrer">IP Geolocation by DB-IP</a></p></div>
   </ManagementDialog>
 }

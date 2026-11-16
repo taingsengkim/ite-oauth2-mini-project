@@ -51,6 +51,13 @@ public class ClientConsentAdapter implements ClientConsentRepository {
 
     @Override
     @Transactional
+    public void revokeAllForPrincipal(String principalName) {
+        jdbc.update("DELETE FROM oauth2_authorization WHERE principal_name = ?", principalName);
+        jdbc.update("DELETE FROM oauth2_authorization_consent WHERE principal_name = ?", principalName);
+    }
+
+    @Override
+    @Transactional
     public void revoke(String registeredClientId, String principalName) {
         var consent = consents.findById(registeredClientId, principalName);
         if (consent != null) consents.remove(consent);

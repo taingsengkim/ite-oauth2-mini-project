@@ -21,6 +21,7 @@
     <div class="field"><label for="password">${ui.t("login.password")}</label><div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" required><button type="button" class="password-toggle" data-password-toggle="password" aria-label="${ui.t("common.showPassword")}" data-show="${ui.t("common.showPassword")}" data-hide="${ui.t("common.hidePassword")}"><span aria-hidden="true">◎</span></button></div></div>
     <button type="submit" class="button button-primary button-full">${ui.t("login.submit")}<span aria-hidden="true">→</span></button>
 </form>
+<p class="auth-alternate"><a href="/dashboard/recovery.html">${ui.t("login.forgotPassword")}</a></p>
 <div class="divider"><span>${ui.t("login.or")}</span></div>
 <div class="social-buttons">
     @for(String provider : java.util.List.of("google", "github", "facebook", "telegram"))

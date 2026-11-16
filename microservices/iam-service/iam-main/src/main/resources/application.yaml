@@ -1,4 +1,16 @@
 spring:
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      mail.smtp.starttls.required: ${SMTP_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   application:
     name: iam-service
   security:
@@ -71,6 +83,14 @@ gg:
 server:
   port: 9000
   forward-headers-strategy: framework
+
+iam:
+  geoip:
+    database: ${IAM_GEOIP_DATABASE:}
+  recovery:
+    enabled: ${IAM_RECOVERY_ENABLED:false}
+    from: ${SMTP_FROM:no-reply@localhost}
+    public-base-url: ${IAM_PUBLIC_BASE_URL:http://localhost:9000}
 
 logging:
   level:

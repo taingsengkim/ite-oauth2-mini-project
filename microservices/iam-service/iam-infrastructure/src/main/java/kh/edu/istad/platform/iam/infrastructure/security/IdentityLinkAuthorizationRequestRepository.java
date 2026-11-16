@@ -65,6 +65,7 @@ public class IdentityLinkAuthorizationRequestRepository
         );
 
         if (value instanceof LinkIdentityIntent intent) {
+            request.setAttribute("iam.identityLinkPopup", intent.popup());
             String registrationId =
                     authorizationRequest.getAttribute("registration_id");
 

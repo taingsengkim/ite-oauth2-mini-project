@@ -33,7 +33,8 @@ public class IdentityLinkController {
         var intent = new LinkIdentityIntent(
                 currentUserProvider.currentUserUuid(),
                 registrationId,
-                clock.instant().plus(Duration.ofMinutes(5))
+                clock.instant().plus(Duration.ofMinutes(5)),
+                "true".equals(request.getParameter("popup"))
         );
 
         request.getSession().setAttribute(

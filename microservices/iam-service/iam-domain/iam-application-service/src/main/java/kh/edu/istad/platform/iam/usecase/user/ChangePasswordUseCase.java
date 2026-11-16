@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import kh.edu.istad.platform.iam.audit.Audited;
+import kh.edu.istad.platform.iam.audit.AuditAction;
+import kh.edu.istad.platform.iam.port.out.user.UserSessions;
+import kh.edu.istad.platform.iam.port.out.client.ClientConsentRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -22,19 +26,29 @@ public class ChangePasswordUseCase {
     private final PasswordPolicy passwordPolicy;
     private final CurrentActorProvider actorProvider;
     private final Clock clock;
+    private final UserSessions sessions;
+    private final ClientConsentRepository consents;
 
     @Transactional
+    @Audited(action = AuditAction.ACCOUNT_PASSWORD_CHANGED, target = "#p0.userUuid()")
     public void execute(ChangePasswordCommand command) {
         passwordPolicy.validate(
                 command.newPassword(), command.confirmPassword()
         );
 
-        var user = repository.findByUuid(command.userUuid())
+        var user = repository.findByUuidForUpdate(command.userUuid())
                 .orElseThrow(() -> new ResourceNotFoundException("User", command.userUuid()));
 
-        if (!passwordHasher.matches(command.currentPassword(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "This account signs in with a linked provider and has no local password");
+        }
+        if (command.currentPassword() == null || !passwordHasher.matches(command.currentPassword(), user.getPasswordHash())) {
 
             throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "Current password is incorrect");
+        }
+
+        if (passwordHasher.matches(command.newPassword(), user.getPasswordHash())) {
+            throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "New password must differ from the current password");
         }
 
         user.changePasswordHash(
@@ -44,5 +58,7 @@ public class ChangePasswordUseCase {
         );
 
         repository.updatePassword(user);
+        consents.revokeAllForPrincipal(user.getUsername());
+        sessions.terminateAll(user.getUuid());
     }
 }

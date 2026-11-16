@@ -92,6 +92,9 @@ public class FindOrProvisionFederatedUserUseCase {
     private AuthUserResult linkVerifiedEmail(UUID userUuid, FederatedIdentityCommand command) {
         var user = users.findByUuidForUpdate(userUuid).orElseThrow(AuthenticationFailedException::new);
         requireActiveAccount(user);
+        if (!user.isEmailVerified()) {
+            throw new ResourceConflictException("An account already uses this email; sign in and link the provider");
+        }
         if (!normalizedEmail(command.email()).equals(normalizedEmail(user.getEmail()))) {
             throw new AuthenticationFailedException();
         }

@@ -29,6 +29,7 @@ public final class User {
 
     private String profileUrl;
     private String pictureUrl;
+    private boolean profilePictureManaged;
     private String websiteUrl;
 
     private String zoneinfo;
@@ -323,6 +324,17 @@ public final class User {
         return value.isBlank() ? null : value.strip();
     }
 
+    public void updateIdentifiers(String username, String email, String actor, Instant now) {
+        String nextUsername = required(username, "username", 50);
+        String nextEmail = required(email, "email", 255).toLowerCase(java.util.Locale.ROOT);
+        if (!nextUsername.equals(this.username) && !nextUsername.matches("[A-Za-z0-9._-]{3,50}"))
+            throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "Username must use 3–50 letters, digits, dots, underscores, or hyphens");
+        touch(actor, now);
+        if (!Objects.equals(this.email, nextEmail)) emailVerified = false;
+        this.username = nextUsername;
+        this.email = nextEmail;
+    }
+
     public void updateProfile(String givenName, String familyName, String nickname, String locale, String phoneNumber, String actor, Instant now) {
 
         String nextGivenName = givenName == null
@@ -438,6 +450,13 @@ public final class User {
     }
 
 
+    public boolean isProfilePictureManaged() { return profilePictureManaged; }
+
+    public void manageProfilePicture(String picture, String actor, Instant now) {
+        updateUrls(null, picture, null, actor, now);
+        profilePictureManaged = true;
+    }
+
     public void updateUrls(
             String profileUrl,
             String pictureUrl,
@@ -510,6 +529,7 @@ public final class User {
 
         user.profileUrl = snapshot.profileUrl() == null ? null : validUrl(snapshot.profileUrl(), "profileUrl");
         user.pictureUrl = snapshot.pictureUrl() == null ? null : validUrl(snapshot.pictureUrl(), "pictureUrl");
+        user.profilePictureManaged = snapshot.profilePictureManaged();
         user.websiteUrl = snapshot.websiteUrl() == null ? null : validUrl(snapshot.websiteUrl(), "websiteUrl");
 
         user.zoneinfo = nullableText(snapshot.zoneinfo(), "zoneinfo", 50);

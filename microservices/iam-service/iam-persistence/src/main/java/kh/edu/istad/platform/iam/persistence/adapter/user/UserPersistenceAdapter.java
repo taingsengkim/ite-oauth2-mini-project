@@ -39,8 +39,8 @@ public class UserPersistenceAdapter implements UserRepository {
     @Transactional
     public User create(User user) {
         var entity = mapper.toNewEntity(user);
-        var saved = repository.saveAndFlush(entity);
-        return mapper.toDomain(saved);
+        try { return mapper.toDomain(repository.saveAndFlush(entity)); }
+        catch (DataIntegrityViolationException exception) { throw profileConflict(exception); }
     }
 
     @Override
@@ -101,6 +101,32 @@ public class UserPersistenceAdapter implements UserRepository {
             }
             throw exception;
         }
+    }
+
+    @Override
+    @Transactional
+    public User updateAccountProfile(User user) {
+        var entity = repository.findByUuidAndDeletedFalse(user.getUuid())
+                .orElseThrow(() -> new ResourceNotFoundException("User", user.getUuid()));
+        mapper.updateProfileEntity(user, entity);
+        entity.setUsername(user.getUsername());
+        entity.setEmail(user.getEmail());
+        entity.setEmailVerified(user.isEmailVerified());
+        entity.setProfilePictureManaged(user.isProfilePictureManaged());
+        try { return mapper.toDomain(repository.saveAndFlush(entity)); }
+        catch (DataIntegrityViolationException exception) { throw profileConflict(exception); }
+    }
+
+    private RuntimeException profileConflict(DataIntegrityViolationException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            String message = cause.getMessage();
+            if (message == null) continue;
+            if ((message.contains("uk_username_reservations_username") || message.contains("Username is reserved by another account"))) return new ResourceConflictException("Username is reserved by another account");
+            if (message.contains("uk_users_username")) return new ResourceConflictException("Username is already registered");
+            if (message.contains("uk_users_email")) return new ResourceConflictException("Email is already registered");
+            if (message.contains("uk_users_phone_number")) return new ResourceConflictException("Phone number is already registered");
+        }
+        return exception;
     }
 
     @Override

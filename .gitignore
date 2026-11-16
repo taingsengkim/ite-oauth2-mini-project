@@ -47,3 +47,6 @@ bin/
 .env.*
 !.env.example
 **/jte-classes/
+/microservices/iam-service/data/geoip/*.mmdb
+/microservices/iam-service/data/geoip/*.gz
+/microservices/iam-service/data/geoip/*.tmp

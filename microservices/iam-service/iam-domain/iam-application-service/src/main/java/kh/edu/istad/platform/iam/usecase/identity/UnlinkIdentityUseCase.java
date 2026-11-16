@@ -23,6 +23,7 @@ public class UnlinkIdentityUseCase {
     private final Clock clock;
 
     @Transactional
+    @kh.edu.istad.platform.iam.audit.Audited(action = kh.edu.istad.platform.iam.audit.AuditAction.ACCOUNT_IDENTITY_UNLINKED, target = "#p0", related = "#p1")
     public void execute(UUID userUuid, UUID identityUuid) {
         Objects.requireNonNull(userUuid, "userUuid");
         Objects.requireNonNull(identityUuid, "identityUuid");

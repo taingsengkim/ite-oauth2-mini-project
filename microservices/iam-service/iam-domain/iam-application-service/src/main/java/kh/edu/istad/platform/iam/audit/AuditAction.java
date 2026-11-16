@@ -1,6 +1,12 @@
 package kh.edu.istad.platform.iam.audit;
 
 public enum AuditAction {
+    ACCOUNT_PASSWORD_RECOVERED("account.password.recover", "Password recovered by email", "user"),
+    ACCOUNT_DEACTIVATED("account.deactivate", "Account deactivated by its owner", "user"),
+    ACCOUNT_IDENTITY_LINKED("account.identity.link", "Social account linked", "user"),
+    ACCOUNT_IDENTITY_UNLINKED("account.identity.unlink", "Social account unlinked", "user"),
+    ACCOUNT_PASSWORD_CHANGED("account.password.change", "Account password changed", "user"),
+    ACCOUNT_PROFILE_UPDATED("account.profile.update", "Account profile updated", "user"),
     CONFIGURATION_UPDATED("configuration.update", "System configuration updated", "configuration"),
     USER_CREATED("user.create", "User created", "user"),
     USER_UPDATED("user.update", "User profile updated", "user"),

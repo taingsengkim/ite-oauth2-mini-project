@@ -1,0 +1,28 @@
+const en = {
+  title: 'Password Recovery', description: 'Get a secure link to reset your IAM password.', resetTitle: 'Choose a new password',
+  loading: 'Loading recovery options…', failed: 'Could not load recovery options. Try again.', retry: 'Retry',
+  unavailable: 'Email recovery is currently unavailable. Contact your IAM administrator or sign in with an already linked provider.',
+  email: 'Account email', emailRule: 'Enter a valid email address.', send: 'Send reset link', sending: 'Requesting reset link…',
+  sent: 'If an eligible account exists, a reset link will be emailed. Check your inbox and spam folder. The link expires in 15 minutes.',
+  help: 'Recovery is available for active accounts with a local password. Social-only accounts should use their linked provider. Requests are rate limited; wait before requesting another link.',
+  next: 'New password', confirm: 'Confirm new password', reset: 'Reset password', resetting: 'Resetting password…', show: 'Show passwords',
+  mismatch: 'Passwords do not match.', required: 'Confirm your new password.', invalid: 'This reset link is invalid or expired. Request a new link.',
+  resetFailed: 'Could not reset your password. Check the password requirements or request a new link.', requestFailed: 'Could not request a reset link. Try again later.',
+  different: 'Choose a password different from your current password.', security: 'Resetting your password signs out all IAM browser sessions and revokes application grants. Existing access tokens may remain valid until expiry.',
+  success: 'Your password has been reset. Sign in with your new password.', signIn: 'Back to sign in', newLink: 'Request a new link',
+  csrf: 'Your security token expired. Reload this page and try again.',
+}
+export const recoveryMessages: Record<'en' | 'km', typeof en> = { en, km: {
+  title: 'ស្ដារពាក្យសម្ងាត់', description: 'ទទួលតំណសុវត្ថិភាព ដើម្បីកំណត់ពាក្យសម្ងាត់ IAM ឡើងវិញ។', resetTitle: 'ជ្រើសរើសពាក្យសម្ងាត់ថ្មី',
+  loading: 'កំពុងផ្ទុកជម្រើសស្ដារ…', failed: 'មិនអាចផ្ទុកជម្រើសស្ដារបានទេ។ សូមព្យាយាមម្ដងទៀត។', retry: 'ព្យាយាមម្ដងទៀត',
+  unavailable: 'ការស្ដារតាមអ៊ីមែលមិនអាចប្រើបាននៅពេលនេះទេ។ សូមទាក់ទងអ្នកគ្រប់គ្រង IAM ឬចូលតាមអ្នកផ្ដល់សេវាដែលបានភ្ជាប់។',
+  email: 'អ៊ីមែលគណនី', emailRule: 'សូមបញ្ចូលអ៊ីមែលត្រឹមត្រូវ។', send: 'ផ្ញើតំណកំណត់ឡើងវិញ', sending: 'កំពុងស្នើសុំតំណ…',
+  sent: 'បើមានគណនីដែលមានលក្ខណៈសមស្រប តំណកំណត់ឡើងវិញនឹងត្រូវផ្ញើតាមអ៊ីមែល។ សូមពិនិត្យប្រអប់សារ និងសារឥតបានការ។ តំណផុតកំណត់ក្នុង ១៥ នាទី។',
+  help: 'អាចស្ដារបានសម្រាប់គណនីដែលកំពុងបើក និងមានពាក្យសម្ងាត់ក្នុងប្រព័ន្ធ។ គណនីសង្គមគួរចូលតាមអ្នកផ្ដល់សេវា។ សំណើមានកំណត់ចំនួន។ សូមរង់ចាំមុនស្នើសុំម្ដងទៀត។',
+  next: 'ពាក្យសម្ងាត់ថ្មី', confirm: 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី', reset: 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ', resetting: 'កំពុងកំណត់ពាក្យសម្ងាត់ឡើងវិញ…', show: 'បង្ហាញពាក្យសម្ងាត់',
+  mismatch: 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ។', required: 'សូមបញ្ជាក់ពាក្យសម្ងាត់ថ្មី។', invalid: 'តំណនេះមិនត្រឹមត្រូវ ឬផុតកំណត់។ សូមស្នើសុំតំណថ្មី។',
+  resetFailed: 'មិនអាចកំណត់ពាក្យសម្ងាត់ឡើងវិញបានទេ។ សូមពិនិត្យលក្ខខណ្ឌពាក្យសម្ងាត់ ឬស្នើសុំតំណថ្មី។', requestFailed: 'មិនអាចស្នើសុំតំណបានទេ។ សូមព្យាយាមម្ដងទៀតនៅពេលក្រោយ។',
+  different: 'សូមជ្រើសរើសពាក្យសម្ងាត់ខុសពីពាក្យសម្ងាត់បច្ចុប្បន្ន។', security: 'ការកំណត់ពាក្យសម្ងាត់ឡើងវិញនឹងចាកចេញពីគ្រប់វគ្គកម្មវិធីរុករក IAM និងដកសិទ្ធិកម្មវិធី។ ថូខឹនដែលមានស្រាប់អាចនៅមានសុពលភាពរហូតដល់ផុតកំណត់។',
+  success: 'បានកំណត់ពាក្យសម្ងាត់ឡើងវិញ។ សូមចូលដោយប្រើពាក្យសម្ងាត់ថ្មី។', signIn: 'ត្រឡប់ទៅចូលគណនី', newLink: 'ស្នើសុំតំណថ្មី',
+  csrf: 'ថូខឹនសុវត្ថិភាពបានផុតកំណត់។ សូមផ្ទុកទំព័រឡើងវិញ។',
+} }

@@ -33,7 +33,7 @@ export async function requestJson<T>(url: string, options: RequestInit = {}): Pr
           ? problem.detail
           : `Request failed (${response.status}).`
     if (response.status === 409) {
-      if (message === 'Username is already registered') fields.username = message
+      if (message === 'Username is already registered' || message === 'Username is reserved by another account') fields.username = message
       if (message === 'Email is already registered') fields.email = message
       if (message === 'Phone number is already registered') fields.phoneNumber = message
     }

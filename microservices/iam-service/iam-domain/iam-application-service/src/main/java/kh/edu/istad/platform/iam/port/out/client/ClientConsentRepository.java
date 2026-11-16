@@ -9,4 +9,5 @@ public interface ClientConsentRepository {
     List<ConnectedAppResult> findByPrincipalName(String principalName);
     Optional<ConsentClientResult> findClient(String clientId, String principalName);
     void revoke(String registeredClientId, String principalName);
+    void revokeAllForPrincipal(String principalName);
 }

@@ -23,6 +23,11 @@ public class SocialLoginFailureHandler implements AuthenticationFailureHandler {
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
+        if (Boolean.TRUE.equals(request.getAttribute("iam.identityLinkPopup"))) {
+            loginHistory.socialFailure(request, exception);
+            response.sendRedirect("/account/identities/result");
+            return;
+        }
         if (exception instanceof FederatedProfileRequiredException pending) {
             var session = request.getSession();
             request.changeSessionId();
