@@ -1,3 +1,5 @@
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import type { ReactNode } from 'react'
 
 import { AppHeader } from './app-header'
@@ -8,24 +10,20 @@ import { shellMessages } from './navigation'
 
 type DashboardLayoutProps = {
     activePage: DashboardPage
-    onNavigate: (page: DashboardPage) => void
     children: ReactNode
     authorities: readonly string[]
 }
 
 export function DashboardLayout({
                                     activePage,
-                                    onNavigate,
                                     children,
                                     authorities,
                                 }: DashboardLayoutProps) {
     const { locale } = useAccountLocale()
     return (
-        <div className="min-h-screen bg-background text-foreground md:flex">
+        <TooltipProvider><SidebarProvider className="min-h-screen bg-background text-foreground">
             <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:p-3">{shellMessages[locale].skip}</a>
             <AppSidebar
-                activePage={activePage}
-                onNavigate={onNavigate}
                 authorities={authorities}
             />
 
@@ -39,6 +37,6 @@ export function DashboardLayout({
                     {children}
                 </main>
             </div>
-        </div>
+        </SidebarProvider></TooltipProvider>
     )
 }

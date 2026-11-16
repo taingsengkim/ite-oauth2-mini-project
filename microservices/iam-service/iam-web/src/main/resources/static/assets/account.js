@@ -12,3 +12,7 @@ document.querySelectorAll("form[data-confirm]").forEach(form => {
         if (!window.confirm(form.dataset.confirm)) event.preventDefault();
     });
 });
+// Recheck server authentication when Back restores a cached login/account page.
+window.addEventListener("pageshow", event => {
+    if (event.persisted) window.location.reload();
+});

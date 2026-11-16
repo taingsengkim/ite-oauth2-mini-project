@@ -67,6 +67,8 @@ public class UserPersistenceAdapter implements UserRepository {
             var predicates = new ArrayList<Predicate>();
             predicates.add(builder.isFalse(entity.get("deleted")));
             if (query.enabled() != null) predicates.add(builder.equal(entity.get("enabled"), query.enabled()));
+            if (query.locked() != null) predicates.add(builder.equal(entity.get("accountNonLocked"), !query.locked()));
+            if (query.emailVerified() != null) predicates.add(builder.equal(entity.get("emailVerified"), query.emailVerified()));
             if (query.search() != null) {
                 String pattern = PersistencePageQueries.contains(query.search());
                 predicates.add(builder.or(

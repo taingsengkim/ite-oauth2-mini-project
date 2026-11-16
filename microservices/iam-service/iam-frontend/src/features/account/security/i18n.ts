@@ -1,5 +1,6 @@
 const en = {
   title: 'Security & Password', description: 'Manage the password you use to sign in to your IAM account.',
+  passwordTitle: 'Update your password', requirements: 'Password requirements', local: 'Password sign-in', provider: 'Social sign-in', manageProviders: 'Manage linked accounts', hide: 'Hide passwords',
   loading: 'Loading account security…', retry: 'Retry', loadFailed: 'Could not load account security. Try again.',
   current: 'Current password', next: 'New password', confirm: 'Confirm new password', save: 'Change password', saving: 'Changing password…',
   required: 'This field is required.', mismatch: 'Passwords do not match.', different: 'Choose a password different from your current password.',
@@ -15,6 +16,7 @@ const en = {
 }
 export const securityMessages: Record<'en' | 'km', typeof en> = { en, km: {
   title: 'សុវត្ថិភាព និងពាក្យសម្ងាត់', description: 'គ្រប់គ្រងពាក្យសម្ងាត់សម្រាប់ចូលគណនី IAM របស់អ្នក។',
+  passwordTitle: 'ប្ដូរពាក្យសម្ងាត់របស់អ្នក', requirements: 'លក្ខខណ្ឌពាក្យសម្ងាត់', local: 'ចូលដោយពាក្យសម្ងាត់', provider: 'ចូលតាមគណនីសង្គម', manageProviders: 'គ្រប់គ្រងគណនីដែលបានភ្ជាប់', hide: 'លាក់ពាក្យសម្ងាត់',
   loading: 'កំពុងផ្ទុកសុវត្ថិភាពគណនី…', retry: 'ព្យាយាមម្ដងទៀត', loadFailed: 'មិនអាចផ្ទុកសុវត្ថិភាពគណនីបានទេ។ សូមព្យាយាមម្ដងទៀត។',
   current: 'ពាក្យសម្ងាត់បច្ចុប្បន្ន', next: 'ពាក្យសម្ងាត់ថ្មី', confirm: 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី', save: 'ប្ដូរពាក្យសម្ងាត់', saving: 'កំពុងប្ដូរពាក្យសម្ងាត់…',
   required: 'សូមបំពេញវាលនេះ។', mismatch: 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ។', different: 'សូមជ្រើសរើសពាក្យសម្ងាត់ថ្មីខុសពីពាក្យសម្ងាត់បច្ចុប្បន្ន។',

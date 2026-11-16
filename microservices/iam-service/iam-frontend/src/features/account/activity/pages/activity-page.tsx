@@ -36,7 +36,7 @@ export function ActivityPage() {
       <div className="grid gap-4 md:grid-cols-3"><FormField form={form} name="action" label={t.action} as="select" options={[{ value: '', label: t.all }, ...Object.entries(activityActions).map(([value, text]) => ({ value, label: text[locale] }))]} /><FormField form={form} name="from" label={t.from} type="datetime-local" /><FormField form={form} name="to" label={t.to} type="datetime-local" /></div>
       <div className="flex flex-wrap gap-2"><Button type="submit">{t.apply}</Button><Button type="button" variant="outline" onClick={() => { form.reset(emptyActivityFilters); setFilters(emptyActivityFilters); setPage(0); setRevision((value) => value + 1) }}>{t.reset}</Button><Button type="button" variant="outline" disabled={loading} onClick={() => setRevision((value) => value + 1)}>{t.refresh}</Button></div>
     </form>
-    {loading ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={t[result.error]} />{result.error === 'expired' && <a className="underline" href="/dashboard/index.html?view=activity">{t.signIn}</a>}</div> : data && <>
+    {loading ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={t[result.error]} />{result.error === 'expired' && <a className="underline" href="/dashboard/account/activity">{t.signIn}</a>}</div> : data && <>
       <p aria-live="polite" className="text-sm text-muted-foreground">{t.total.replace('{count}', data.totalElements.toLocaleString(locale === 'km' ? 'km-KH' : 'en-GB'))}</p>
       {!data.content.length ? <p>{t.empty}</p> : <div className="grid gap-4 lg:grid-cols-2">{data.content.map((event) => {
         const details = deviceDetails(event.userAgent || '')

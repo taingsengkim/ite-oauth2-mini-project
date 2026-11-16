@@ -1,3 +1,4 @@
+import { Link2, ShieldCheck, RefreshCw, Unlink, CheckCircle2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { Button } from '@/components/ui/button'
@@ -81,17 +82,22 @@ export function AccountsPage() {
   }
   if (!data && !error) return <p role="status">{t.loading}</p>
   return <section className="space-y-5" aria-label={t.title}>
-    {error && <div className="space-y-2"><FormError message={t[error === 'expired' ? 'expired' : 'failed']} />{error === 'expired' && <a className="underline" href="/dashboard/index.html?view=accounts">{t.signIn}</a>}</div>}
+    {error && <div className="space-y-2"><FormError message={t[error === 'expired' ? 'expired' : 'failed']} />{error === 'expired' && <a className="underline" href="/dashboard/account/linked-accounts">{t.signIn}</a>}</div>}
     {notice && <p role="status" className="rounded-lg border p-4 text-sm">{t[notice]}</p>}
-    <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{data?.hasPassword ? t.password : t.social}</p><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.reload}</Button></div>
+    <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted"><ShieldCheck className="size-5" aria-hidden="true" /></span><div className="space-y-1"><p className="font-medium">{data?.hasPassword ? t.password : t.social}</p><p className="text-sm text-muted-foreground">{t.description}</p><p className="text-xs text-muted-foreground">{t.connected}: {data?.identities.length ?? 0}</p></div></div><Button variant="outline" className="shrink-0" onClick={() => setRevision((value) => value + 1)}><RefreshCw className="size-4" aria-hidden="true" />{t.reload}</Button></div>
     {pending && <div role="status" className="space-y-3 rounded-lg border p-4 text-sm"><p>{names[pending]}: {t.linking}</p><Button variant="outline" onClick={() => { popup.current?.close(); setPending(null); setNotice('incomplete'); setRevision((value) => value + 1) }}>{t.stop}</Button></div>}
-    {data && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{providers.map((provider) => {
+    {data && <div className="space-y-3">{providers.map((provider) => {
       const identity = data.identities.find((value) => value.provider.toLowerCase() === provider)
       const last = !data.hasPassword && data.identities.length <= 1
       const date = (value: string | null) => value ? new Date(value).toLocaleString(locale === 'km' ? 'km-KH' : 'en-GB') : t.never
-      return <article key={provider} className="flex min-w-0 flex-col gap-4 rounded-xl border p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">{names[provider]}</h2><Badge variant="outline">{identity ? t.connected : t.notConnected}</Badge></div>
-        {identity ? <><p className="break-words text-sm">{identity.email || identity.username || identity.displayName || names[provider]}</p><dl className="space-y-3 text-sm text-muted-foreground"><div><dt>{t.linkedAt}</dt><dd>{date(identity.linkedAt)}</dd></div><div><dt>{t.lastLogin}</dt><dd>{date(identity.lastLoginAt)}</dd></div></dl>{last && <p className="text-sm">{t.lastMethod}</p>}<Button variant="outline" className="mt-auto" disabled={last || Boolean(pending)} onClick={() => setSelected(identity)}>{t.unlink}</Button></>
-          : <Button variant="outline" className="mt-auto" disabled={Boolean(pending) || Boolean(error)} onClick={() => { void start(provider) }}>{t.link}</Button>}
+      return <article key={provider} className="min-w-0 rounded-xl border bg-card p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3"><span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-white p-2"><img src={`/assets/providers/${provider}.png`} alt="" width="24" height="24" className="size-6 object-contain" /></span><div className="min-w-0 space-y-1"><h2 className="text-sm font-semibold">{names[provider]}</h2>{identity && <p className="break-all text-sm text-muted-foreground">{identity.email || identity.username || identity.displayName || names[provider]}</p>}</div></div>
+          <div className="flex flex-wrap items-center gap-3"><Badge variant="outline" className={identity ? 'border-emerald-600/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'}>{identity && <CheckCircle2 className="mr-1 size-3" aria-hidden="true" />}{identity ? t.connected : t.notConnected}</Badge>
+            {identity ? <Button variant="outline" disabled={last || Boolean(pending)} onClick={() => setSelected(identity)}><Unlink className="size-4" aria-hidden="true" />{t.unlink}</Button> : <Button variant="outline" disabled={Boolean(pending) || Boolean(error)} onClick={() => { void start(provider) }}><Link2 className="size-4" aria-hidden="true" />{t.link}</Button>}
+          </div>
+        </div>
+        {identity && <div className="mt-4 space-y-3 border-t pt-4 sm:ml-13"><dl className="flex flex-wrap gap-x-8 gap-y-3 text-xs"><div><dt className="text-muted-foreground">{t.linkedAt}</dt><dd className="mt-1">{date(identity.linkedAt)}</dd></div><div><dt className="text-muted-foreground">{t.lastLogin}</dt><dd className="mt-1">{date(identity.lastLoginAt)}</dd></div></dl>{last && <p className="text-xs leading-relaxed text-muted-foreground">{t.lastMethod}</p>}</div>}
       </article>
     })}</div>}
     {selected && <UnlinkDialog identity={selected} onClose={() => setSelected(null)} onRemoved={() => { setSelected(null); setNotice('unlinked'); setRevision((value) => value + 1) }} />}

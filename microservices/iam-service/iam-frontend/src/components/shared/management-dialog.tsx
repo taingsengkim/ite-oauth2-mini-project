@@ -1,10 +1,17 @@
 import type { ReactNode } from 'react'
+import { useContext } from 'react'
+import { ManagementPageContext } from '@/lib/management-presentation'
 import { Dialog } from '@base-ui/react/dialog'
 import { Button } from '@/components/ui/button'
 
 export function ManagementDialog({ title, description, busy = false, onClose, children }: {
   title: string; description: string; busy?: boolean; onClose: () => void; children: ReactNode
 }) {
+  const page = useContext(ManagementPageContext)
+  if (page) return <section className="rounded-xl border bg-card p-5 sm:p-7" aria-busy={busy}>
+    <div className="mb-6 space-y-2 border-b pb-5"><h2 className="text-xl font-semibold">{title}</h2><p className="text-sm text-muted-foreground">{description}</p></div>
+    {children}
+  </section>
   return <Dialog.Root open onOpenChange={(open) => { if (!open && !busy) onClose() }}><Dialog.Portal>
     <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
     <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-background p-6 text-foreground shadow-xl">

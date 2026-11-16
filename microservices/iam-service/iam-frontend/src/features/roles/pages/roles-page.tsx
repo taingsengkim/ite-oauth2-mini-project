@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -9,11 +10,11 @@ import { listRoles } from '../api/roles-api'
 import { RoleFormDialog } from '../components/role-form-dialog'
 import { RoleActionDialog } from '../components/role-action-dialog'
 import type { RoleAction } from '../components/role-action-dialog'
-import { RoleDetailsDialog } from '../components/role-details-dialog'
 import type { Page, Role, RoleAccess, RoleSummary } from '../types'
 
 const noAccess: RoleAccess = { create: false, update: false, delete: false, assign: false, browsePermissions: false }
 export function RolesPage() {
+  const navigate = useNavigate()
   const [access, setAccess] = useState(noAccess)
   const [sessionError, setSessionError] = useState<string | null>(null)
   const [query, setQuery] = useState({ page: 0, search: '', active: '' })
@@ -21,7 +22,6 @@ export function RolesPage() {
   const [result, setResult] = useState<{ key: string; data?: Page<RoleSummary>; error?: string } | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [editor, setEditor] = useState<{ role?: RoleSummary } | null>(null)
-  const [viewUuid, setViewUuid] = useState<string | null>(null)
   const [action, setAction] = useState<{ role: RoleSummary; type: RoleAction } | null>(null)
   const key = JSON.stringify([query, revision])
 
@@ -58,7 +58,7 @@ export function RolesPage() {
     setSuccess(`Role ${role.name} was ${editor?.role ? 'updated' : 'created'} successfully.`)
     setEditor(null)
     setRevision((value) => value + 1)
-    setViewUuid(role.uuid)
+    void navigate('/roles/' + encodeURIComponent(role.uuid))
   }
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
@@ -85,17 +85,17 @@ export function RolesPage() {
           <TableBody>{!data.content.length ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-muted-foreground">No roles match your search.</TableCell></TableRow>
             : data.content.map((role) => <TableRow key={role.uuid} className="cursor-pointer" onClick={(event) => {
               const target = event.target
-              if (target instanceof Element && event.currentTarget.contains(target) && !target.closest('button,[role="menuitem"],[data-role-actions]') && !window.getSelection()?.toString()) setViewUuid(role.uuid)
+              if (target instanceof Element && event.currentTarget.contains(target) && !target.closest('button,[role="menuitem"],[data-role-actions]') && !window.getSelection()?.toString()) void navigate('/roles/' + encodeURIComponent(role.uuid))
             }}>
-              <TableCell><button type="button" className="rounded-sm text-left font-medium hover:underline focus-visible:outline-2" onClick={() => setViewUuid(role.uuid)} aria-label={`View ${role.name}`}>{role.name}</button></TableCell>
+              <TableCell><button type="button" className="rounded-sm text-left font-medium hover:underline focus-visible:outline-2" onClick={() => void navigate('/roles/' + encodeURIComponent(role.uuid))} aria-label={`View ${role.name}`}>{role.name}</button></TableCell>
               <TableCell className="max-w-xs truncate" title={role.description || ''}>{role.description || 'No description'}</TableCell>
               <TableCell><Badge variant="outline">{role.system ? 'System' : 'Custom'}</Badge></TableCell>
               <TableCell><Badge variant={role.active ? 'secondary' : 'outline'}>{role.active ? 'Active' : 'Inactive'}</Badge></TableCell>
               <TableCell className="cursor-default text-right" data-role-actions><DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="outline" size="sm" aria-label={`Actions for ${role.name}`} />}>Actions</DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-44">
-                  <DropdownMenuItem onClick={() => setViewUuid(role.uuid)}>Details & permissions</DropdownMenuItem>
-                  {access.update && <DropdownMenuItem disabled={role.system} onClick={() => { setSuccess(null); setEditor({ role }) }}>Edit role</DropdownMenuItem>}
+                  <DropdownMenuItem onClick={() => void navigate('/roles/' + encodeURIComponent(role.uuid))}>Details & permissions</DropdownMenuItem>
+                  {access.update && <DropdownMenuItem disabled={role.system} onClick={() => { setSuccess(null); void navigate('/roles/' + encodeURIComponent(role.uuid) + '/edit') }}>Edit role</DropdownMenuItem>}
                   {access.update && <DropdownMenuItem disabled={role.system} onClick={() => { setSuccess(null); setAction({ role, type: role.active ? 'deactivate' : 'activate' }) }}>{role.active ? 'Deactivate' : 'Activate'}</DropdownMenuItem>}
                   {access.delete && <><DropdownMenuSeparator /><DropdownMenuItem variant="destructive" disabled={role.system} onClick={() => { setSuccess(null); setAction({ role, type: 'delete' }) }}>Delete role</DropdownMenuItem></>}
                   {role.system && <p className="px-2 py-1 text-xs text-muted-foreground">System role: changes are protected.</p>}
@@ -108,7 +108,6 @@ export function RolesPage() {
             <Button variant="outline" disabled={query.page + 1 >= data.page.totalPages} onClick={() => setQuery((current) => ({ ...current, page: current.page + 1 }))}>Next</Button></div></div>
       </>}
     {editor && <RoleFormDialog key={editor.role?.uuid || 'create'} role={editor.role} onClose={() => setEditor(null)} onSaved={saved} />}
-    {viewUuid && <RoleDetailsDialog key={viewUuid} uuid={viewUuid} access={access} onClose={() => setViewUuid(null)} onChanged={(message) => { setSuccess(message); setRevision((value) => value + 1) }} />}
     {action && <RoleActionDialog role={action.role} action={action.type} onClose={() => setAction(null)} onDone={(message) => { setAction(null); setSuccess(message); setRevision((value) => value + 1) }} />}
   </section>
 }

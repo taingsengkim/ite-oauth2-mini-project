@@ -1,3 +1,4 @@
+import { OverviewCharts } from '../components/overview-charts'
 import { useEffect, useState } from 'react'
 import { Users, UserCheck, Shield, KeyRound, AppWindow, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -67,6 +68,7 @@ export function OverviewPage({ onNavigate }: { onNavigate: (page: DashboardPage)
           <CardContent className="space-y-3"><p className="text-3xl font-semibold tracking-tight">{value.toLocaleString()}</p><CardDescription>{description}</CardDescription>{authorities.includes(permission) && <Button variant="outline" onClick={() => onNavigate(page)}>Manage {page.toLowerCase()}</Button>}</CardContent>
         </Card>)}
       </div>}
+      {statistics && <OverviewCharts statistics={statistics} />}
       <Card><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><div className="space-y-1"><CardTitle>Recent activity</CardTitle><CardDescription>Latest administrator actions and sign-in events.</CardDescription></div>{authorities.includes('audit:read') && <Button variant="outline" onClick={() => onNavigate('Audit Logs')}>View all activity</Button>}</div></CardHeader>
         <CardContent>{activity?.key !== revision ? <p role="status" className="py-4 text-sm text-muted-foreground">Loading recent activity...</p> : activity.denied ? <p className="text-sm text-muted-foreground">Viewing recent activity requires audit:read access.</p> : activity.error ? <div role="alert" className="space-y-3"><p className="text-sm text-destructive">{activity.error}</p><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>Retry activity</Button></div> : recent && (recent.events.length === 0 ? <p className="py-4 text-sm text-muted-foreground">No recorded activity yet.</p> : <div className="overflow-hidden rounded-lg border"><Table><caption className="sr-only">Five latest audit events</caption><TableHeader><TableRow><TableHead>When</TableHead><TableHead>Actor</TableHead><TableHead>Activity</TableHead><TableHead>Result</TableHead></TableRow></TableHeader>
           <TableBody>{recent.events.map((event) => <TableRow key={event.uuid} className="cursor-pointer" onClick={(click) => {

@@ -20,6 +20,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/logout': { target: 'http://localhost:9000', changeOrigin: true },
+      '/login': { target: 'http://localhost:9000', changeOrigin: true },
+      '/assets': { target: 'http://localhost:9000', changeOrigin: true },
       '/recovery-api': { target: 'http://localhost:9000', changeOrigin: true },
       '/account/identities': { target: 'http://localhost:9000', changeOrigin: true },
       '/oauth2/authorization': { target: 'http://localhost:9000', changeOrigin: true },

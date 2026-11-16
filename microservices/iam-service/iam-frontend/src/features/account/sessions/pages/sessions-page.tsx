@@ -26,14 +26,14 @@ export function SessionsPage() {
       .catch((failure: unknown) => { if (!controller.signal.aborted) setResult({ revision, error: failure instanceof ApiError && failure.status === 401 ? 'expired' : 'failed' }) })
     return () => controller.abort()
   }, [revision])
-  if (notice === 'signedOut') return <div role="status" className="space-y-3 rounded-xl border p-5"><p>{t.signedOut}</p><a className="font-medium underline" href="/dashboard/index.html?view=sessions">{t.signIn}</a></div>
+  if (notice === 'signedOut') return <div role="status" className="space-y-3 rounded-xl border p-5"><p>{t.signedOut}</p><a className="font-medium underline" href="/dashboard/account/sessions">{t.signIn}</a></div>
   const loading = result?.revision !== revision
   const sessions = loading ? [] : result.sessions || []
   const date = (value: string | null) => value ? new Date(value).toLocaleString(locale === 'km' ? 'km-KH' : 'en-GB') : t.noTimeout
   return <section className="space-y-5" aria-label={t.title}>
     {notice && <p role="status" className="rounded-lg border p-4 text-sm">{t[notice]}</p>}
     <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={loading || Boolean(pending)} onClick={() => setRevision((value) => value + 1)}>{t.refresh}</Button><Button variant="destructive" disabled={loading || Boolean(result?.error) || !sessions.length || Boolean(pending)} onClick={() => setPending('all')}>{t.endAll}</Button></div>
-    {loading ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={t[result.error]} />{result.error === 'expired' && <a className="underline" href="/dashboard/index.html?view=sessions">{t.signIn}</a>}</div> : !sessions.length ? <p>{t.empty}</p>
+    {loading ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={t[result.error]} />{result.error === 'expired' && <a className="underline" href="/dashboard/account/sessions">{t.signIn}</a>}</div> : !sessions.length ? <p>{t.empty}</p>
       : <div className="grid gap-4 lg:grid-cols-2">{sessions.map((session) => {
         const details = deviceDetails(session.userAgent)
         const location = locationText(session.location, locale) || (isLoopback(session.ipAddress) ? t.local : session.location?.status === 'PRIVATE' ? t.privateNetwork : t.unavailable)

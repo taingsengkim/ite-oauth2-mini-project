@@ -1,18 +1,23 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (() => {
+        let theme;
+        try { theme = localStorage.getItem('iam-theme'); } catch {}
+        const dark = theme === 'dark' || (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/dashboard/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>iam-frontend</title>
-    <script type="module" crossorigin src="/dashboard/assets/dashboard-BQlEHJmv.js"></script>
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/rolldown-runtime-WkwZ5CU-.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/form-field-C71qRWqF.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/forms-GGqQZ0tL.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/badge-C7IguT_2.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/form-schemas-OAYzU1FS.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/DialogTitle-GkYhLGxH.js">
-    <link rel="stylesheet" crossorigin href="/dashboard/assets/forms-TfrAl0cH.css">
+    <script type="module" crossorigin src="/dashboard/assets/dashboard-yOCtwL_K.js"></script>
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/createLucideIcon-DbTER_Tg.js">
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/language-switcher-Ch4tp3DW.js">
+    <link rel="stylesheet" crossorigin href="/dashboard/assets/language-switcher-Chojm-5K.css">
   </head>
   <body>
     <div id="root"></div>

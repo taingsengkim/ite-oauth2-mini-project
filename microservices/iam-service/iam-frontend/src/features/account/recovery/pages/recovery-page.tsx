@@ -9,6 +9,7 @@ import { recoveryMessages } from '../i18n'
 import { recoveryEmailSchema, recoveryResetSchema } from '../schemas'
 import { recoveryContext, recoveryMutation } from '../api'
 import type { RecoveryContext } from '../api'
+import { LanguageSwitcher } from '@/components/shared/language-switcher'
 
 export function RecoveryPage({ token }: { token: string }) {
   const { locale, setLocale } = useAccountLocale()
@@ -22,7 +23,7 @@ export function RecoveryPage({ token }: { token: string }) {
     return () => controller.abort()
   }, [revision])
   return <main className="flex min-h-dvh items-center justify-center bg-muted/30 px-4 py-10"><section className="w-full max-w-lg space-y-6 rounded-2xl border bg-background p-6 shadow-sm sm:p-8">
-    <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-semibold">ISTAD IAM</p><label className="text-sm"><span className="sr-only">Language / ភាសា</span><select value={locale} onChange={(event) => setLocale(event.target.value === 'km' ? 'km' : 'en')} className="rounded-md border bg-background px-2 py-1"><option value="en">English</option><option value="km">ខ្មែរ</option></select></label></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-semibold">ISTAD IAM</p><LanguageSwitcher value={locale} onChange={setLocale} /></div>
     <div className="space-y-2"><h1 className="text-2xl font-semibold">{token ? t.resetTitle : t.title}</h1><p className="text-sm text-muted-foreground">{t.description}</p></div>
     {state?.revision !== revision ? <p role="status">{t.loading}</p> : state.error ? <div className="space-y-3"><FormError message={t.failed} /><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.retry}</Button></div>
       : !state.context?.enabled ? <p role="status" className="text-sm">{t.unavailable}</p> : token ? /^[A-Za-z0-9_-]{43}$/.test(token) ? <ResetForm context={state.context} token={token} /> : <FormError message={t.invalid} /> : <EmailForm />}

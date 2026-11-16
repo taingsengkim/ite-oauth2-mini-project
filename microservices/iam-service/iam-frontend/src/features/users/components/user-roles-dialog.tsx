@@ -4,7 +4,7 @@ import { useSchemaForm } from '@/lib/forms'
 import { FormField, FormError } from '@/components/shared/form-field'
 import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useRef, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
+import { ManagementDialog } from '@/components/shared/management-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { listRoles } from '@/features/roles/api/roles-api'
@@ -85,15 +85,7 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
   }
 
   const assignedIds = new Set(assigned?.filter((role) => !role.expired).map((role) => role.uuid))
-  return <Dialog.Root open onOpenChange={(open) => { if (!open && !pending.current) onClose() }}>
-    <Dialog.Portal>
-      <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-      <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-background p-6 text-foreground shadow-xl">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="space-y-2"><Dialog.Title className="text-lg font-semibold">Manage roles: {user.username}</Dialog.Title>
-            <Dialog.Description className="text-sm text-muted-foreground">Assign roles, change expiration, and revoke access. Changes apply to future sign-ins; existing sessions keep their current permissions.</Dialog.Description></div>
-          <Dialog.Close disabled={busy} render={<Button type="button" variant="outline" />}>Close</Dialog.Close>
-        </div>
+  return <ManagementDialog title={`Manage roles: ${user.username}`} description="Assign roles, change expiration, and revoke access. Changes apply to future sign-ins; existing sessions keep their current permissions." busy={busy} onClose={onClose}>
         {loadError ? <div role="alert" className="space-y-3"><p className="text-sm text-destructive">{loadError}</p>
           <Button variant="outline" onClick={() => { setLoadError(null); setRetry((value) => value + 1) }}>Retry</Button></div>
           : assigned === null ? <p role="status">Loading role assignments...</p> : <div className="space-y-6" aria-busy={busy}>
@@ -150,7 +142,5 @@ export function UserRolesDialog({ user, canBrowse, currentUserUuid, onClose, onC
               </form>
             </section>}
           </div>}
-      </Dialog.Popup>
-    </Dialog.Portal>
-  </Dialog.Root>
+  </ManagementDialog>
 }

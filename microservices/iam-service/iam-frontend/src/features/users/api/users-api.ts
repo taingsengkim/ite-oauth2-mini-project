@@ -57,6 +57,10 @@ type ListUsersOptions = {
     page?: number
     size?: number
     search?: string
+    enabled?: string
+    locked?: string
+    emailVerified?: string
+    sort?: string
     signal?: AbortSignal
 }
 
@@ -64,16 +68,21 @@ export async function listUsers({
                                     page = 0,
                                     size = 20,
                                     search = '',
+                                    enabled = '', locked = '', emailVerified = '', sort = 'username,asc',
                                     signal,
                                 }: ListUsersOptions = {}): Promise<UserPageResponse> {
     const params = new URLSearchParams({
         page: String(page),
         size: String(size),
-        sort: 'username,asc',
+        sort,
     })
 
     if (search.trim()) {
         params.set('search', search.trim())
+    }
+
+    for (const [key, value] of Object.entries({ enabled, locked, emailVerified })) {
+        if (value === 'true' || value === 'false') params.set(key, value)
     }
 
     const response = await fetch(`/dashboard-api/users?${params}`, {

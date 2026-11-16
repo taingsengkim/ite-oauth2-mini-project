@@ -1,3 +1,5 @@
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { MoreHorizontal } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
     Table,
@@ -67,13 +69,13 @@ export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDelete
                                     if (window.getSelection()?.toString()) return
                                     onViewUser(user.uuid)
                                 }}>
-                                <TableCell className="font-medium">
+                                <TableCell className="font-medium"><div className="flex items-center gap-3"><Avatar className="size-9" aria-hidden="true">{user.pictureUrl && <AvatarImage src={user.pictureUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />}<AvatarFallback className="text-xs font-semibold">{(user.name || user.username).trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase()}</AvatarFallback></Avatar>
                                     <button type="button"
                                         className="cursor-pointer rounded-sm text-left hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                                         aria-label={`View details for ${user.username}`}
                                         onClick={() => onViewUser(user.uuid)}>
                                         {user.name || user.username}
-                                    </button>
+                                    </button></div>
                                 </TableCell>
                                 <TableCell>{user.username}</TableCell>
                                 <TableCell>{user.email || '—'}</TableCell>
@@ -82,17 +84,17 @@ export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDelete
                                     <Badge
                                         variant={user.enabled ? 'secondary' : 'outline'}
                                     >
-                                        {user.enabled ? 'Active' : 'Inactive'}
+                                        {user.enabled ? 'Enabled' : 'Disabled'}
                                     </Badge>
                                     {!user.accountNonLocked && <Badge variant="destructive">Locked</Badge>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="cursor-default text-right" data-user-actions>
                                     <DropdownMenu>
-                                        <DropdownMenuTrigger render={<Button variant="outline" size="sm" aria-label={`Actions for ${user.username}`} />}>
-                                            Actions
+                                        <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label={`Actions for ${user.username}`} />}>
+                                            <MoreHorizontal className="size-4" aria-hidden="true" />
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="min-w-44">
+                                        <DropdownMenuContent align="end" className="min-w-56">
                                             <DropdownMenuItem onClick={() => onViewUser(user.uuid)}>View details</DropdownMenuItem>
                                             {onLoginHistory && <DropdownMenuItem onClick={() => onLoginHistory(user)}>Login history</DropdownMenuItem>}
                                             {onManageSessions && <DropdownMenuItem onClick={() => onManageSessions(user)}>View sessions</DropdownMenuItem>}

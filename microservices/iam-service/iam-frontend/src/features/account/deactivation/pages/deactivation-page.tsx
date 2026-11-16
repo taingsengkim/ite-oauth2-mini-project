@@ -25,7 +25,7 @@ export function DeactivationPage() {
   }, [revision])
   if (done) return <div role="status" className="max-w-2xl space-y-3 rounded-xl border p-6"><p>{t.success}</p><p className="text-sm text-muted-foreground">{t.successHelp}</p></div>
   if (result?.revision !== revision) return <p role="status">{t.loading}</p>
-  if (result.error) return <div className="space-y-3"><FormError message={t[result.error]} /><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.retry}</Button>{result.error === 'expired' && <a className="ml-4 underline" href="/dashboard/index.html?view=deactivation">{t.signIn}</a>}</div>
+  if (result.error) return <div className="space-y-3"><FormError message={t[result.error]} /><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.retry}</Button>{result.error === 'expired' && <a className="ml-4 underline" href="/dashboard/account/deactivation">{t.signIn}</a>}</div>
   return <section className="max-w-2xl space-y-5" aria-label={t.title}><div className="space-y-4 rounded-xl border border-destructive/40 p-6"><h2 className="font-semibold">{t.heading}</h2><ul className="list-disc space-y-3 pl-5 text-sm"><li>{t.consequences}</li><li>{t.retained}</li><li>{t.reactivate}</li><li>{t.tokenHint}</li></ul><p className="text-sm text-muted-foreground">{t.adminHint}</p><Button variant="destructive" onClick={() => setOpen(true)}>{t.deactivate}</Button></div>
     {open && result.status && <DeactivationDialog status={result.status} onClose={() => setOpen(false)} onDone={() => { setOpen(false); setDone(true); setResult(null) }} />}
   </section>

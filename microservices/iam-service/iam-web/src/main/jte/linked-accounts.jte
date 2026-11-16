@@ -15,7 +15,7 @@
     @for(String provider : java.util.List.of("google", "github", "facebook", "telegram"))
         !{var linked = identities.stream().filter(value -> value.provider().name().equalsIgnoreCase(provider)).findFirst().orElse(null);}
         <section class="panel provider-card">
-            <div class="provider-card-heading"><span class="provider-icon provider-icon-large ${provider}" aria-hidden="true">${provider.substring(0, 1).toUpperCase()}</span><span class="badge ${linked != null ? "badge-green" : ""}">${ui.t(linked != null ? "accounts.connected" : "accounts.notConnected")}</span></div>
+            <div class="provider-card-heading"><span class="provider-icon provider-icon-large ${provider}" aria-hidden="true"><img src="${"/assets/providers/" + provider + ".png"}" alt="" width="24" height="24"></span><span class="badge ${linked != null ? "badge-green" : ""}">${ui.t(linked != null ? "accounts.connected" : "accounts.notConnected")}</span></div>
             <h2>${ui.t("provider." + provider)}</h2>
             @if(linked != null)
                 <p class="provider-account">${ui.text(linked.email() != null ? linked.email() : linked.username() != null ? linked.username() : linked.displayName())}</p>

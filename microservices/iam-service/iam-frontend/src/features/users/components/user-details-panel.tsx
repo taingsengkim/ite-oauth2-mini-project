@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
+import { ManagementDialog } from '@/components/shared/management-dialog'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,36 +23,28 @@ export function UserDetailsPanel({
                                      uuid,
                                      onClose,
                                  }: UserDetailsPanelProps) {
-    const [user, setUser] = useState<UserDetails | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const [retryKey, setRetryKey] = useState(0)
+    const key = uuid + ':' + retryKey
+    const [result, setResult] = useState<{ key: string; user?: UserDetails; error?: string } | null>(null)
+    const loading = result?.key !== key
+    const user = !loading ? result?.user : undefined
+    const error = !loading ? result?.error : undefined
 
     useEffect(() => {
         const controller = new AbortController()
 
-        setLoading(true)
-        setError(null)
-        setUser(null)
+
 
         async function loadUser() {
             try {
                 const result = await getUser(uuid, controller.signal)
 
                 if (!controller.signal.aborted) {
-                    setUser(result)
+                    setResult({ key, user: result })
                 }
             } catch (error) {
                 if (!controller.signal.aborted) {
-                    setError(
-                        error instanceof Error
-                            ? error.message
-                            : 'Could not load user details.',
-                    )
-                }
-            } finally {
-                if (!controller.signal.aborted) {
-                    setLoading(false)
+                    setResult({ key, error: error instanceof Error ? error.message : 'Could not load user details.' })
                 }
             }
         }
@@ -60,7 +52,7 @@ export function UserDetailsPanel({
         void loadUser()
 
         return () => controller.abort()
-    }, [uuid, retryKey])
+    }, [uuid, key])
 
     const fields = user
         ? [
@@ -79,23 +71,7 @@ export function UserDetailsPanel({
         : []
 
     return (
-        <Dialog.Root open onOpenChange={(open) => { if (!open) onClose() }}>
-          <Dialog.Portal>
-            <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-            <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-background p-6 text-foreground shadow-xl">
-            <div className="mb-6 space-y-2">
-                <div className="flex items-center justify-between gap-4">
-                    <Dialog.Title className="text-lg font-semibold">User details</Dialog.Title>
-
-                    <Dialog.Close render={<Button variant="outline" />}>
-                        Close details
-                    </Dialog.Close>
-                </div>
-                <Dialog.Description className="text-sm text-muted-foreground">
-                    Profile information, account status, and assigned roles.
-                </Dialog.Description>
-            </div>
-
+        <ManagementDialog title="User details" description="Profile information, account status, and assigned roles." onClose={onClose}>
             <div className="space-y-6" aria-busy={loading}>
                 {loading && <p role="status">Loading user details...</p>}
 
@@ -175,8 +151,6 @@ export function UserDetailsPanel({
                     </>
                 )}
             </div>
-            </Dialog.Popup>
-          </Dialog.Portal>
-        </Dialog.Root>
+        </ManagementDialog>
     )
 }

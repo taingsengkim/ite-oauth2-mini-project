@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
+import { ManagementDialog } from '@/components/shared/management-dialog'
 import { Button } from '@/components/ui/button'
 import { changeUserStatus } from '../api/users-api'
 import type { User, UserStatusAction } from '../types/types'
@@ -55,24 +55,17 @@ export function UserStatusDialog({ user, action, onClose, onChanged }: UserStatu
   }
 
   return (
-    <Dialog.Root open onOpenChange={(open) => { if (!open && !inFlight.current) onClose() }}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Popup initialFocus={cancelButton} className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-background p-6 text-foreground shadow-xl">
-          <Dialog.Title className="text-lg font-semibold">{detail.label} account?</Dialog.Title>
-          <Dialog.Description className="mt-2 text-sm text-muted-foreground">{detail.description}</Dialog.Description>
+    <ManagementDialog title={`${detail.label} account?`} description={detail.description} busy={busy} onClose={onClose}>
           <div className="my-5 rounded-lg bg-muted/40 p-3 text-sm">
             <p className="font-medium">{user.name || user.username}</p>
             <p className="break-words text-muted-foreground">{user.username} · {user.email}</p>
           </div>
           {error && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2" aria-busy={busy}>
-            <Dialog.Close disabled={busy} render={<Button ref={cancelButton} type="button" variant="outline" />}>Cancel</Dialog.Close>
+            <Button ref={cancelButton} type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
             <Button type="button" disabled={busy} variant={restrictive ? 'destructive' : 'default'}
               onClick={() => void confirm()}>{busy ? 'Updating...' : `${detail.label} account`}</Button>
           </div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </ManagementDialog>
   )
 }

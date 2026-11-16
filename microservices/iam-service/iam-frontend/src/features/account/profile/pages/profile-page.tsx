@@ -10,6 +10,7 @@ import { accountMessages } from '../../i18n'
 import { getAccountProfile, updateAccountProfile } from '../api/profile-api'
 import { profileSchema, validPictureUrl } from '../schemas'
 import type { AccountProfile, ProfileSaved } from '../schemas'
+import { LanguageSwitcher } from '@/components/shared/language-switcher'
 
 export function ProfilePage() {
   const { locale, setLocale } = useAccountLocale()
@@ -27,9 +28,9 @@ export function ProfilePage() {
     return () => controller.abort()
   }, [revision, setLocale])
   return <section aria-label={t.title} className="space-y-5">
-    {saved && <div role="status" className="space-y-3 rounded-lg border bg-muted/40 p-4 text-sm"><p>{saved.signInRequired ? t.signedOut : t.saved}</p>{saved.signInRequired && <a className="font-medium underline" href="/dashboard/index.html?view=profile">{t.signIn}</a>}</div>}
+    {saved && <div role="status" className="space-y-3 rounded-lg border bg-muted/40 p-4 text-sm"><p>{saved.signInRequired ? t.signedOut : t.saved}</p>{saved.signInRequired && <a className="font-medium underline" href="/dashboard/account/profile">{t.signIn}</a>}</div>}
     {saved?.signInRequired ? <p className="break-words text-sm">{t.username}: <strong>{saved.profile.username}</strong> · {t.email}: <strong>{saved.profile.email}</strong></p>
-      : result?.key !== revision ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={result.error === 'unauthenticated' ? t.signInRequired : t.loadFailed} /><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.retry}</Button>{result.error === 'unauthenticated' && <a className="ml-3 text-sm underline" href="/dashboard/index.html?view=profile">{t.signIn}</a>}</div>
+      : result?.key !== revision ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={result.error === 'unauthenticated' ? t.signInRequired : t.loadFailed} /><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.retry}</Button>{result.error === 'unauthenticated' && <a className="ml-3 text-sm underline" href="/dashboard/account/profile">{t.signIn}</a>}</div>
         : result.profile && <ProfileForm key={`${revision}-${result.profile.updatedAt}`} profile={result.profile} onReload={() => { setSaved(null); setRevision((value) => value + 1) }} onSaved={(value) => { setSaved(value); setResult({ key: revision, profile: value.profile }) }} />}
   </section>
 }
@@ -39,11 +40,10 @@ function ProfileForm({ profile, onReload, onSaved }: { profile: AccountProfile; 
   const t = accountMessages[locale]
   const form = useSchemaForm(profileSchema(locale, profile.username), { username: profile.username, email: profile.email || '', givenName: profile.givenName, familyName: profile.familyName,
     nickname: profile.nickname || '', phoneNumber: profile.phoneNumber || '', pictureUrl: profile.pictureUrl || '', locale: profile.locale === 'km' ? 'km' : 'en' })
-  const [username, email, phone, picture] = useWatch({ control: form.control, name: ['username', 'email', 'phoneNumber', 'pictureUrl'] })
+  const [username, email, phone, picture, profileLocale] = useWatch({ control: form.control, name: ['username', 'email', 'phoneNumber', 'pictureUrl', 'locale'] })
   const [failedPicture, setFailedPicture] = useState<string | null>(null)
   const busy = form.formState.isSubmitting
   const identifiersChanged = username.trim() !== profile.username || email.trim().toLowerCase() !== profile.email?.toLowerCase()
-  const localeRegistration = form.register('locale')
   function translateFailure(failure: unknown) {
     if (!(failure instanceof ApiError)) return new Error(t.saveFailed)
     const known: Record<string, string> = {
@@ -67,7 +67,7 @@ function ProfileForm({ profile, onReload, onSaved }: { profile: AccountProfile; 
         <div className="space-y-2"><FormField form={form} name="email" label={`${t.email} *`} type="email" autoComplete="email" hint={t.emailHelp} /><Badge variant="outline">{email.trim().toLowerCase() !== profile.email?.toLowerCase() ? t.resetVerification : profile.emailVerified ? t.verified : t.unverified}</Badge></div>
         <div className="space-y-2"><FormField form={form} name="phoneNumber" label={t.phoneNumber} type="tel" autoComplete="tel" hint={t.phoneHelp} /><Badge variant="outline">{phone.trim() !== (profile.phoneNumber ?? '') ? t.resetVerification : profile.phoneNumberVerified ? t.verified : t.unverified}</Badge></div>
       </div>
-      <div className="max-w-sm space-y-2"><label htmlFor="account-locale" className="text-sm font-medium">{t.locale}</label><select {...localeRegistration} id="account-locale" className="h-9 w-full rounded-md border bg-background px-3 text-sm" onChange={(event) => { void localeRegistration.onChange(event); setLocale(event.target.value === 'km' ? 'km' : 'en'); form.clearErrors() }}><option value="en">English</option><option value="km">ខ្មែរ</option></select></div>
+      <div className="max-w-sm space-y-2"><p className="text-sm font-medium">{t.locale}</p><input type="hidden" {...form.register('locale')} /><LanguageSwitcher value={profileLocale} label={t.locale} disabled={busy} onChange={(value) => { form.setValue('locale', value, { shouldDirty: true, shouldValidate: true }); setLocale(value); form.clearErrors() }} /></div>
       {identifiersChanged && <p className="rounded-lg border bg-muted/40 p-3 text-sm">{t.identifiersWarning}</p>}
     </fieldset>
     <div className="flex flex-wrap justify-end gap-2 border-t pt-4"><Button type="button" variant="outline" disabled={busy || !form.formState.isDirty} onClick={() => { form.reset(); setLocale(profile.locale) }}>{t.discard}</Button><Button type="submit" disabled={busy || !form.formState.isDirty}>{busy ? t.saving : t.save}</Button></div>

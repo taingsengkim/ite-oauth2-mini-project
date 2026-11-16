@@ -62,13 +62,14 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerChain(
-            HttpSecurity http, BrowserUserSessions sessions) throws Exception {
+            HttpSecurity http, BrowserUserSessions sessions, BrowserRequestCache browserRequestCache) throws Exception {
 
         var authorizationServer =
                 new OAuth2AuthorizationServerConfigurer();
 
         http
                 .securityMatcher(authorizationServer.getEndpointsMatcher())
+                .requestCache(cache -> cache.requestCache(browserRequestCache))
                 .with(authorizationServer, server ->
 //                        server.oidc(Customizer.withDefaults())
                                 server.authorizationEndpoint(endpoint -> endpoint.consentPage("/oauth2/consent"))
@@ -350,16 +351,22 @@ public class SecurityConfig {
             IdentityLinkAuthorizationRequestRepository authorizationRequestRepository,
             LoginHistoryRecorder loginHistory,
             BrowserUserSessions sessions,
-            SocialLoginFailureHandler socialLoginFailureHandler
+            SocialLoginFailureHandler socialLoginFailureHandler,
+            BrowserRequestCache browserRequestCache,
+            BrowserLoginSuccessHandler loginSuccess,
+            BrowserLogoutSuccessHandler logoutSuccess
     ) throws Exception {
 
         http
                 .authenticationProvider(authenticationProvider)
+                .requestCache(cache -> cache.requestCache(browserRequestCache))
+                .logout(logout -> logout.invalidateHttpSession(true).clearAuthentication(true).deleteCookies("JSESSIONID")
+                        .logoutSuccessHandler(logoutSuccess).permitAll())
                 .addFilterBefore(new TelegramLoginOriginFilter(
                                 registrations.findByRegistrationId("telegram").getRedirectUri()),
                         org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**", "/account/identities/result",
+                        .requestMatchers("/login", "/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**", "/account/identities/result",
                                 "/dashboard/recovery.html", "/dashboard/assets/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -368,8 +375,7 @@ public class SecurityConfig {
                         .permitAll()
                         .successHandler((request, response, authentication) -> {
                             loginHistory.success(request, authentication);
-                            new org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler()
-                                    .onAuthenticationSuccess(request, response, authentication);
+                            loginSuccess.onAuthenticationSuccess(request, response, authentication);
                         })
                         .failureHandler((request, response, exception) -> {
                             loginHistory.passwordFailure(request, exception);
@@ -384,13 +390,11 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             loginHistory.success(request, authentication);
                             if (Boolean.TRUE.equals(request.getAttribute("iam.identityLinked"))) {
-                                new org.springframework.security.web.savedrequest.HttpSessionRequestCache()
-                                        .removeRequest(request, response);
+                                browserRequestCache.removeRequest(request, response);
                                 response.sendRedirect(Boolean.TRUE.equals(request.getAttribute("iam.identityLinkPopup"))
                                         ? "/account/identities/result" : "/profile/accounts?linked=1");
                             } else {
-                                new org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler()
-                                        .onAuthenticationSuccess(request, response, authentication);
+                                loginSuccess.onAuthenticationSuccess(request, response, authentication);
                             }
                         })
                         .authorizationEndpoint(endpoint -> endpoint

@@ -1,16 +1,27 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (() => {
+        let theme;
+        try { theme = localStorage.getItem('iam-theme'); } catch {}
+        const dark = theme === 'dark' || (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="referrer" content="no-referrer" />
     <title>IAM Password Recovery</title>
-    <script type="module" crossorigin src="/dashboard/assets/recovery-LPQJ-XhC.js"></script>
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/rolldown-runtime-WkwZ5CU-.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/form-field-C71qRWqF.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/forms-GGqQZ0tL.js">
-    <link rel="modulepreload" crossorigin href="/dashboard/assets/schemas-BUz98BGC.js">
-    <link rel="stylesheet" crossorigin href="/dashboard/assets/forms-TfrAl0cH.css">
+    <script type="module" crossorigin src="/dashboard/assets/recovery-BMdnoDHf.js"></script>
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/createLucideIcon-DbTER_Tg.js">
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/language-switcher-Ch4tp3DW.js">
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/form-field-o_dkCTP8.js">
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/forms-CUY3CCyv.js">
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/schemas-DGTN0LoH.js">
+    <link rel="modulepreload" crossorigin href="/dashboard/assets/schemas-Ca6Slpmy.js">
+    <link rel="stylesheet" crossorigin href="/dashboard/assets/language-switcher-Chojm-5K.css">
   </head>
   <body>
     <div id="root"></div>

@@ -3,7 +3,11 @@ package kh.edu.istad.platform.iam.dto.user;
 import kh.edu.istad.platform.iam.dto.pagination.PageQuery;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
 
-public record UserFilterQuery(int page, int size, String sort, String search, Boolean enabled) {
+public record UserFilterQuery(int page, int size, String sort, String search, Boolean enabled,
+                              Boolean locked, Boolean emailVerified) {
+    public UserFilterQuery(int page, int size, String sort, String search, Boolean enabled) {
+        this(page, size, sort, search, enabled, null, null);
+    }
     public UserFilterQuery {
         new PageQuery(page, size, sort);
         if (search != null && search.length() > 255) {

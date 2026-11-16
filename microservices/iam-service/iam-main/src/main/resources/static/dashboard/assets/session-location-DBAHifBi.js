@@ -1,0 +1,1 @@
+function e(e,t){if(e?.status!==`RESOLVED`||!e.countryCode)return null;let n=e.countryCode;try{n=new Intl.DisplayNames([t],{type:`region`}).of(n)||n}catch{}return[e.city,n].filter(Boolean).join(`, `)}export{e as t};

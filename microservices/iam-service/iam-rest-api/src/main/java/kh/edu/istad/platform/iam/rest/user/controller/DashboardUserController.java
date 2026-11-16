@@ -131,10 +131,12 @@ public class DashboardUserController {
             @Size(max = 255) String search,
 
             @RequestParam(name = "enabled", required = false)
-            Boolean enabled
+            Boolean enabled,
+            @RequestParam(name = "locked", required = false) Boolean locked,
+            @RequestParam(name = "emailVerified", required = false) Boolean emailVerified
     ) {
         var result = listUsersUseCase.execute(
-                new UserFilterQuery(page, size, sort, search, enabled)
+                new UserFilterQuery(page, size, sort, search, enabled, locked, emailVerified)
         );
 
         return new UserPageResponse(
