@@ -27,6 +27,7 @@ public class EmailRegistrationRequests implements RegistrationRequests {
     @Override public Challenge start(RegisterUserCommand command,String ip) {
         requireEnabled();var started=verification.start(command,ip); // Commit before queuing SMTP.
         if(started.limited())throw new RateLimited();
+        if(started.conflict()!=null)throw new ResourceConflictException(started.conflict());
         deliver(started.delivery());return started.challenge();
     }
     @Override public Verification verify(String token,String code,String ip) {

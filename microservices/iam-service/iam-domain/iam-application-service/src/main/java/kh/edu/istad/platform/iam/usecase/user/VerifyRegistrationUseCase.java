@@ -29,7 +29,8 @@ public class VerifyRegistrationUseCase {
     private final RegisterUserUseCase register;
     private final Clock clock;
     private static final SecureRandom RANDOM = new SecureRandom();
-    public record Started(Challenge challenge, Delivery delivery, boolean limited) {
+    public record Started(Challenge challenge, Delivery delivery, boolean limited, String conflict) {
+        public Started(Challenge challenge, Delivery delivery, boolean limited) { this(challenge,delivery,limited,null); }
         @Override public String toString() { return "StartedRegistration[REDACTED]"; }
     }
     public record Resent(Delivery delivery, boolean limited) {
@@ -54,9 +55,9 @@ public class VerifyRegistrationUseCase {
         String token=newToken();String code=newCode();String tokenHash=digest(token);String codeHash=codeHash(token,code);
         var challenge=new Challenge(token,mask(email),now.plus(Duration.ofMinutes(10)));
         pending.cleanup(now);
-        // Existing accounts and duplicate pending requests get the same accepted response,
-        // but no usable challenge or email. Never replace another pending registration's details.
-        if (users.findByUsername(username).isPresent() || users.findByEmail(email).isPresent()) return new Started(challenge,null,false);
+        // Return conflicts normally so rate-limit counters commit before the facade reports them.
+        if (users.isEmailRegistered(email)) return new Started(null,null,false,"Email is already registered");
+        if (users.isUsernameRegistered(username)) return new Started(null,null,false,"Username is already registered");
         boolean inserted=pending.insert(new Pending(tokenHash,email,username,hash,command.givenName(),command.familyName(),
                 command.locale(),codeHash,now,challenge.expiresAt(),now,0));
         return new Started(challenge,inserted?new Delivery(email,command.locale(),code,tokenHash,codeHash):null,false);

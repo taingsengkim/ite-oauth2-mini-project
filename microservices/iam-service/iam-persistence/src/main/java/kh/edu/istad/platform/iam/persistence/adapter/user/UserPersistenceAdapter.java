@@ -60,6 +60,13 @@ public class UserPersistenceAdapter implements UserRepository {
                 .map(mapper::toDomain);
     }
 
+    @Override public boolean isEmailRegistered(String email) {
+        return repository.existsByEmailIgnoreCase(email.strip());
+    }
+    @Override public boolean isUsernameRegistered(String username) {
+        return repository.existsByUsername(username);
+    }
+
 
     @Override
     public PageResult<User> findAll(UserFilterQuery query) {

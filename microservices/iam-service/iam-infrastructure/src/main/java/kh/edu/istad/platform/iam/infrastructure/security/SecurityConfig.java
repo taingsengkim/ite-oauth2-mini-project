@@ -1,6 +1,7 @@
 package kh.edu.istad.platform.iam.infrastructure.security;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -51,6 +52,7 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) -> response.sendError(401))
                         .accessDeniedHandler((request, response, exception) -> response.sendError(403)));
+        http.cors(Customizer.withDefaults());
         return http.build();
     }
 
@@ -128,6 +130,7 @@ public class SecurityConfig {
 
         http.addFilterBefore(new BrowserSessionTrackingFilter(sessions),
                 org.springframework.security.web.authentication.logout.LogoutFilter.class);
+        http.cors(Customizer.withDefaults());
         return http.build();
     }
 
@@ -252,6 +255,7 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(apiAuthenticationConverter()))
                 );
 
+        http.cors(Customizer.withDefaults());
         return http.build();
     }
 
@@ -336,6 +340,7 @@ public class SecurityConfig {
 
         http.addFilterBefore(new BrowserSessionTrackingFilter(sessions),
                 org.springframework.security.web.authentication.logout.LogoutFilter.class);
+        http.cors(Customizer.withDefaults());
         return http.build();
     }
 
@@ -413,6 +418,7 @@ public class SecurityConfig {
 
         http.addFilterBefore(new BrowserSessionTrackingFilter(sessions),
                 org.springframework.security.web.authentication.logout.LogoutFilter.class);
+        http.cors(Customizer.withDefaults());
         return http.build();
     }
 
@@ -447,18 +453,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+    UrlBasedCorsConfigurationSource corsConfigurationSource(
+            @Value("${iam.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}") List<String> allowedOrigins) {
         var configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                allowedOrigins
         );
         configuration.setAllowedMethods(
-                List.of("GET", "POST", "OPTIONS")
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD")
         );
         configuration.setAllowedHeaders(
-                List.of("Content-Type", "Authorization", "Accept")
+                List.of("Content-Type", "Authorization", "Accept", "X-CSRF-TOKEN", "X-XSRF-TOKEN")
         );
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

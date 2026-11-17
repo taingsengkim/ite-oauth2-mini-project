@@ -1,5 +1,20 @@
 # Email verification for password registration
 
+## Registration feedback update
+
+Registration now explicitly reports an already registered/reserved email or username
+instead of returning a decoy challenge for existing users. This intentionally makes
+account availability visible, as requested for registration usability. Throttle counters
+commit before the conflict is reported. Uniqueness checks include soft-deleted accounts,
+whose identifiers remain reserved by the database. Concurrent conflicts during final
+verification still roll back and return a friendly restart/sign-in message.
+
+The browser form shows field validation errors and the current server password policy's
+specific rejection reason. Passwords are never repopulated into HTML. Registration pages
+use `Referrer-Policy: same-origin` so browser form submissions retain their origin.
+Older validation notes below describe the initial implementation; existing-account
+decoy behavior was superseded by this update.
+
 Password registration now creates a pending request instead of an IAM user.
 Only a valid email code creates the enabled account, marks its email verified,
 and assigns the default USER role in one transaction. Existing users, admin-created

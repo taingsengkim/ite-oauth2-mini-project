@@ -85,6 +85,8 @@ server:
   forward-headers-strategy: framework
 
 iam:
+  cors:
+    allowed-origins: ${IAM_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   registration:
     verification-enabled: ${IAM_REGISTRATION_VERIFICATION_ENABLED:${IAM_RECOVERY_ENABLED:false}}
   geoip:

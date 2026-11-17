@@ -35,13 +35,13 @@ public class RegisterUserUseCase {
         String username = required(command.username(), "Username");
         String email = required(command.email(), "Email").toLowerCase(Locale.ROOT);
 
-        if (repository.findByUsername(username).isPresent()) {
+        if (repository.isUsernameRegistered(username)) {
             throw new ResourceConflictException(
                     "Username is already registered"
             );
         }
 
-        if (repository.findByEmail(email).isPresent()) {
+        if (repository.isEmailRegistered(email)) {
             throw new ResourceConflictException("Email is already registered");
         }
 

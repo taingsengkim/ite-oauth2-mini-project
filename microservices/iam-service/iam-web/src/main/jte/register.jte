@@ -2,6 +2,7 @@
 @import kh.edu.istad.platform.iam.web.form.RegistrationForm
 @param RegistrationForm form
 @param String error = null
+@param java.util.Map<String,String> fieldErrors = java.util.Map.of()
 @param WebUi ui
 
 @template.layout.page(ui = ui, title = ui.t("register.title"), account = false, content = @`
@@ -14,14 +15,38 @@
 <form method="post" action="/register" class="form-stack">
     @template.components.csrf(ui)
     <div class="field-grid">
-        <div class="field"><label for="givenName">${ui.t("field.givenName")}</label><input id="givenName" name="givenName" value="${form.givenName()}" maxlength="100" autocomplete="given-name" required></div>
-        <div class="field"><label for="familyName">${ui.t("field.familyName")}</label><input id="familyName" name="familyName" value="${form.familyName()}" maxlength="100" autocomplete="family-name" required></div>
+        <div class="field"><label for="givenName">${ui.t("field.givenName")}</label><input id="givenName" name="givenName" value="${form.givenName()}" maxlength="100" autocomplete="given-name" required>
+@if(fieldErrors.containsKey("givenName"))
+<p class="registration-field-error" role="alert">${fieldErrors.get("givenName")}</p>
+@endif
+</div>
+        <div class="field"><label for="familyName">${ui.t("field.familyName")}</label><input id="familyName" name="familyName" value="${form.familyName()}" maxlength="100" autocomplete="family-name" required>
+@if(fieldErrors.containsKey("familyName"))
+<p class="registration-field-error" role="alert">${fieldErrors.get("familyName")}</p>
+@endif
+</div>
     </div>
-    <div class="field"><label for="username">${ui.t("field.username")}</label><input id="username" name="username" value="${form.username()}" maxlength="50" autocomplete="username" required></div>
-    <div class="field"><label for="email">${ui.t("field.email")}</label><input id="email" name="email" type="email" value="${form.email()}" maxlength="255" autocomplete="email" required></div>
+    <div class="field"><label for="username">${ui.t("field.username")}</label><input id="username" name="username" value="${form.username()}" maxlength="50" autocomplete="username" required>
+@if(fieldErrors.containsKey("username"))
+<p class="registration-field-error" role="alert">${fieldErrors.get("username")}</p>
+@endif
+</div>
+    <div class="field"><label for="email">${ui.t("field.email")}</label><input id="email" name="email" type="email" value="${form.email()}" maxlength="255" autocomplete="email" required>
+@if(fieldErrors.containsKey("email"))
+<p class="registration-field-error" role="alert">${fieldErrors.get("email")}</p>
+@endif
+</div>
     <div class="field-grid">
-        <div class="field"><label for="password">${ui.t("login.password")}</label><input id="password" name="password" type="password" autocomplete="new-password" maxlength="72" required></div>
-        <div class="field"><label for="confirmPassword">${ui.t("field.confirmPassword")}</label><input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="72" required></div>
+        <div class="field"><label for="password">${ui.t("login.password")}</label><input id="password" name="password" type="password" autocomplete="new-password" maxlength="72" required>
+@if(fieldErrors.containsKey("password"))
+<p class="registration-field-error" role="alert">${fieldErrors.get("password")}</p>
+@endif
+</div>
+        <div class="field"><label for="confirmPassword">${ui.t("field.confirmPassword")}</label><input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="72" required>
+@if(fieldErrors.containsKey("confirmPassword"))
+<p class="registration-field-error" role="alert">${fieldErrors.get("confirmPassword")}</p>
+@endif
+</div>
     </div>
     <div class="field"><label for="locale">${ui.t("field.locale")}</label><select id="locale" name="locale"><option value="en" selected="${"en".equals(form.locale())}">${ui.t("common.english")}</option><option value="km" selected="${"km".equals(form.locale())}">${ui.t("common.khmer")}</option></select></div>
     <button type="submit" class="button button-primary button-full">${ui.t("register.submit")}<span aria-hidden="true">→</span></button>

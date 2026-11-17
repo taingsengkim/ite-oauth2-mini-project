@@ -18,6 +18,9 @@ public interface UserRepository {
 
     Optional<User> findByEmail(String email);
 
+    default boolean isEmailRegistered(String email) { return findByEmail(email).isPresent(); }
+    default boolean isUsernameRegistered(String username) { return findByUsername(username).isPresent(); }
+
     PageResult<User> findAll(UserFilterQuery query);
 
     User updateProfile(User user);
