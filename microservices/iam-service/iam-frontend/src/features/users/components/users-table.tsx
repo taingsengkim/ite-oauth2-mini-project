@@ -19,6 +19,7 @@ import {Button} from "@/components/ui/button.tsx";
 
 type UsersTableProps = {
     users: User[]
+    recentUuid?: string
     onViewUser: (uuid: string) => void
     onEditUser?: (uuid: string) => void
     onStatusAction?: (user: User, action: UserStatusAction) => void
@@ -31,7 +32,7 @@ type UsersTableProps = {
     currentUserUuid?: string | null
 }
 
-export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDeleteUser,onResetPassword,onManageRoles,onManagePermissions,onManageSessions,onLoginHistory,currentUserUuid }: UsersTableProps) {
+export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDeleteUser,onResetPassword,onManageRoles,onManagePermissions,onManageSessions,onLoginHistory,currentUserUuid,recentUuid }: UsersTableProps) {
     return (
         <div className="overflow-hidden rounded-lg border">
             <Table>
@@ -61,7 +62,7 @@ export function UsersTable({ users,onViewUser,onEditUser,onStatusAction,onDelete
                         </TableRow>
                     ) : (
                         users.map((user) => (
-                            <TableRow key={user.uuid} className="cursor-pointer"
+                            <TableRow key={user.uuid} className={`cursor-pointer ${recentUuid === user.uuid ? 'bg-emerald-500/5 ring-1 ring-inset ring-emerald-500/20' : ''}`}
                                 onClick={(event) => {
                                     const target = event.target
                                     if (!(target instanceof Element) || !event.currentTarget.contains(target)) return

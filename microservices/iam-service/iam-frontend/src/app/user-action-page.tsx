@@ -1,3 +1,4 @@
+import { rememberSave, clearRecentSave } from '@/lib/recent-save'
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
@@ -26,13 +27,12 @@ export function UserActionPage({ action, session }: { action: UserAction; sessio
 
 function UserActionContent({ action, session, id }: { action: UserAction; session: DashboardSession; id: string }) {
   const navigate = useNavigate()
-  const [notice, setNotice] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
   const [result, setResult] = useState<{ user?: UserDetails; error?: string } | null>(null)
   const global = action === 'new' || action === 'all-history'
   const details = '/users/' + encodeURIComponent(id)
   const close = () => { void navigate(global ? '/users' : details) }
-  const done = (message: string, deleted = false) => { void navigate(deleted ? '/users' : details, { replace: true, state: { notice: message } }) }
+  const done = (message: string, deleted = false) => { if (deleted) clearRecentSave('users', id); else rememberSave('users', id, message); void navigate(deleted ? '/users' : details, { replace: true, state: { notice: message } }) }
   useEffect(() => {
     if (global) return
     const controller = new AbortController()
@@ -43,16 +43,15 @@ function UserActionContent({ action, session, id }: { action: UserAction; sessio
   const selfRestricted = user?.uuid === session.userUuid && ['disable', 'lock', 'delete'].includes(action)
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center gap-3"><Button variant="outline" render={<Link to="/users" />}><ArrowLeft className="size-4" aria-hidden="true" />Back to users</Button>{!global && <Button variant="ghost" render={<Link to={details} />}>User details</Button>}</div>
-    {notice && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{notice}</p>}
     <ManagementPageContext value={true}>
-      {action === 'new' ? <CreateUserDialog onClose={close} onCreated={created => { void navigate('/users/' + encodeURIComponent(created.uuid), { replace: true, state: { notice: 'User created successfully.' } }) }} />
+      {action === 'new' ? <CreateUserDialog onClose={close} onCreated={created => { rememberSave('users', created.uuid, 'User created successfully.'); void navigate('/users/' + encodeURIComponent(created.uuid), { replace: true, state: { notice: 'User created successfully.' } }) }} />
         : action === 'all-history' ? <LoginHistoryDialog onClose={close} />
         : result?.error ? <div role="alert" className="space-y-3 rounded-xl border p-5"><p className="text-sm text-destructive">{result.error}</p><Button variant="outline" onClick={() => { setResult(null); setRetry(value => value + 1) }}>Retry</Button></div>
         : !user ? <p role="status">Loading user...</p>
         : selfRestricted ? <p className="rounded-xl border p-5 text-sm">You cannot deactivate, lock, or delete your own account.</p>
         : <>
-          {action === 'roles' && <UserRolesDialog user={user} canBrowse={session.authorities.includes('role:read')} currentUserUuid={session.userUuid} onClose={close} onChanged={setNotice} />}
-          {action === 'permissions' && <UserPermissionsDialog user={user} canBrowse={session.authorities.includes('permission:read')} currentUserUuid={session.userUuid} onClose={close} onChanged={setNotice} />}
+          {action === 'roles' && <UserRolesDialog user={user} canBrowse={session.authorities.includes('role:read')} currentUserUuid={session.userUuid} onClose={close} onChanged={message => done(message)} />}
+          {action === 'permissions' && <UserPermissionsDialog user={user} canBrowse={session.authorities.includes('permission:read')} currentUserUuid={session.userUuid} onClose={close} onChanged={message => done(message)} />}
           {action === 'sessions' && <UserSessionsDialog user={user} canTerminate={session.authorities.includes('user:update')} onClose={close} />}
           {action === 'login-history' && <LoginHistoryDialog user={user} onClose={close} />}
           {action === 'reset-password' && <ResetPasswordDialog user={user} onClose={close} onReset={() => done('Password reset successfully.')} />}

@@ -1,3 +1,5 @@
+import { RecentSavedRecord } from '@/components/shared/recent-saved-record'
+import { useRecentSave } from '@/lib/recent-save'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { UserFiltersForm } from './user-filters'
 import { defaultUserFilters } from '../user-filter-schema'
@@ -15,6 +17,7 @@ import { getDashboardSession } from '@/lib/api-client'
 
 
 export function UsersPage() {
+  const recent = useRecentSave('users')
     const navigate = useNavigate()
     const [canRead, setCanRead] = useState(false)
     const [canCreate, setCanCreate] = useState(false)
@@ -89,7 +92,7 @@ export function UsersPage() {
 
 
     return (
-        <section className="space-y-4" aria-label="User management">
+        <section className="space-y-4" aria-label="User management"><RecentSavedRecord resource="users" />
             {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
             {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">Manage accounts, access and security.</p><div className="flex flex-wrap gap-2"><Button variant="outline" disabled={loading} onClick={() => setRetryKey(value => value + 1)}><RefreshCw className="size-4" aria-hidden="true" />Refresh</Button>{canRead && <Button variant="outline" onClick={() => { void navigate('/users/login-history') }}><History className="size-4" aria-hidden="true" />Login history</Button>}{canCreate && <Button onClick={() => { void navigate('/users/new') }}><Plus className="size-4" aria-hidden="true" />Create user</Button>}</div></div>
@@ -129,6 +132,7 @@ export function UsersPage() {
 
                     <UsersTable
                         users={data.content}
+                        recentUuid={recent?.id}
                         onViewUser={uuid => { void navigate('/users/' + encodeURIComponent(uuid)) }}
                         onEditUser={canUpdate ? (uuid) => { void navigate('/users/' + encodeURIComponent(uuid) + '/edit') } : undefined}
                         currentUserUuid={currentUserUuid}

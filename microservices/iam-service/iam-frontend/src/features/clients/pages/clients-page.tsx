@@ -1,3 +1,5 @@
+import { RecentSavedRecord } from '@/components/shared/recent-saved-record'
+import { useRecentSave, rememberSave, clearRecentSave } from '@/lib/recent-save'
 import { useNavigate } from 'react-router-dom'
 import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
@@ -11,6 +13,7 @@ import { ClientActionDialog, ClientFormDialog, ClientSecretDialog } from '../com
 import type { ClientAccess, ClientPage, IssuedClient, ManagedClient } from '../types'
 
 export function ClientsPage() {
+  const recent = useRecentSave('clients')
   const navigate = useNavigate()
   const [access, setAccess] = useState<ClientAccess>({ create: false, update: false, delete: false })
   const [sessionError, setSessionError] = useState<string | null>(null)
@@ -45,13 +48,14 @@ export function ClientsPage() {
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
   function saved(value: IssuedClient) {
+    rememberSave('clients', value.client.id, `Client ${value.client.clientId} saved successfully.`)
     setEditor(null); setRevision((current) => current + 1)
     setSuccess(`Client ${value.client.clientId} saved successfully.`)
     if (value.clientSecret) setIssued(value)
-    else void navigate('/clients/' + encodeURIComponent(value.client.id))
+
   }
 
-  return <section aria-label="OAuth client management" className="space-y-4">
+  return <section aria-label="OAuth client management" className="space-y-4"><RecentSavedRecord resource="clients" />
     {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -65,7 +69,7 @@ export function ClientsPage() {
           <div className="overflow-hidden rounded-lg border"><Table><caption className="sr-only">OAuth clients and management actions</caption>
             <TableHeader><TableRow>{['Application', 'Client ID', 'Authentication', 'Grant types', 'Actions'].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader>
             <TableBody>{!data.content.length ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-muted-foreground">No matching clients.</TableCell></TableRow>
-              : data.content.map((client) => <TableRow key={client.id} className="cursor-pointer" onClick={(event) => {
+              : data.content.map((client) => <TableRow key={client.id} className={`cursor-pointer ${recent?.id === client.id ? 'bg-emerald-500/5 ring-1 ring-inset ring-emerald-500/20' : ''}`} onClick={(event) => {
                 const target = event.target
                 if (target instanceof Element && event.currentTarget.contains(target) && !target.closest('button,[role="menuitem"],[data-client-actions]') && !window.getSelection()?.toString()) void navigate('/clients/' + encodeURIComponent(client.id))
               }}>
@@ -89,6 +93,7 @@ export function ClientsPage() {
     {editor && <ClientFormDialog key={editor.id ?? 'create'} id={editor.id} onClose={() => setEditor(null)} onSaved={saved} />}
     {action && <ClientActionDialog client={action.client} action={action.type} onClose={() => setAction(null)} onDone={(value) => {
       setSuccess(value ? 'Client secret rotated. Save the new secret now.' : `Client ${action.client.clientId} deleted.`)
+      if (action.type === 'delete') clearRecentSave('clients', action.client.id); else rememberSave('clients', action.client.id, 'Client secret rotated successfully.');
       setAction(null); setRevision((current) => current + 1); if (value) setIssued(value)
     }} />}
     {issued && <ClientSecretDialog issued={issued} onClose={() => setIssued(null)} />}

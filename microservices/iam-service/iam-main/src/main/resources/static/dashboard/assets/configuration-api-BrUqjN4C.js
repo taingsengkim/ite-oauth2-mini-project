@@ -1,1 +1,0 @@
-import{or as e,sr as t}from"./language-switcher-Ch4tp3DW.js";function n(e){return t(`/dashboard-api/configuration`,{signal:e})}function r(t,n){return e(`/dashboard-api/configuration`,`PUT`,{version:t,policy:n})}function i(e){return t(`/dashboard-api/client-defaults`,{signal:e})}export{n,r,i as t};

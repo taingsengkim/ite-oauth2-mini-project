@@ -392,7 +392,7 @@ public class SecurityConfig {
                             if (Boolean.TRUE.equals(request.getAttribute("iam.identityLinked"))) {
                                 browserRequestCache.removeRequest(request, response);
                                 response.sendRedirect(Boolean.TRUE.equals(request.getAttribute("iam.identityLinkPopup"))
-                                        ? "/account/identities/result" : "/profile/accounts?linked=1");
+                                        ? "/account/identities/result" : "/dashboard/account/linked-accounts");
                             } else {
                                 loginSuccess.onAuthenticationSuccess(request, response, authentication);
                             }

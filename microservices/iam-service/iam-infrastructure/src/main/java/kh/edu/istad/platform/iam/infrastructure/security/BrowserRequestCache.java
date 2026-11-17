@@ -10,9 +10,9 @@ public class BrowserRequestCache extends HttpSessionRequestCache {
         setRequestMatcher(request -> "GET".equals(request.getMethod()) && !utilityPath(request.getServletPath()));
     }
     static boolean utilityPath(String path) {
-        if (path == null) return true;
+        if (path == null || path.equals("/")) return true;
         for (String prefix : new String[]{"/login", "/logout", "/error", "/register", "/assets", "/dashboard/assets",
-                "/api", "/dashboard-api", "/recovery-api", "/oauth2/authorization"})
+                "/api", "/dashboard-api", "/recovery-api", "/oauth2/authorization", "/profile"})
             if (path.equals(prefix) || path.startsWith(prefix + "/")) return true;
         return path.equals("/dashboard/recovery.html") || path.equals("/account/identities/result") || path.equals("/favicon.ico");
     }

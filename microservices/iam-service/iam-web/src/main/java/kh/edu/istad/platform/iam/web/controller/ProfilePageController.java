@@ -36,21 +36,12 @@ public class ProfilePageController {
 
     @GetMapping("/")
     public String index(Model model) {
-        var uuid = currentUser.currentUserUuid();
-        model.addAttribute("profile", profile.execute(uuid));
-        model.addAttribute("authorities", authorities.execute(uuid));
-        model.addAttribute("identityCount", identities.execute(uuid).size());
-        model.addAttribute("appCount", connectedApps.execute(uuid).size());
-        return "index";
+        return "redirect:/dashboard/";
     }
 
     @GetMapping("/profile/edit")
     public String edit(Model model) {
-        var details = profile.execute(currentUser.currentUserUuid());
-        var user = details.user();
-        model.addAttribute("form", new ProfileForm(user.givenName(), user.familyName(),
-                details.nickname(), details.phoneNumber(), user.locale()));
-        return "profile-edit";
+        return "redirect:/dashboard/account/profile";
     }
 
     @PostMapping("/profile/edit")
@@ -75,9 +66,7 @@ public class ProfilePageController {
 
     @GetMapping("/profile/password")
     public String password(Model model) {
-        model.addAttribute("hasPassword", profile.execute(currentUser.currentUserUuid()).hasPassword());
-        model.addAttribute("form", PasswordForm.empty());
-        return "change-password";
+        return "redirect:/dashboard/account/security";
     }
 
     @PostMapping("/profile/password")
@@ -108,9 +97,7 @@ public class ProfilePageController {
 
     @GetMapping("/profile/accounts")
     public String accounts(@RequestParam(name = "linked", required = false) String linked, Model model) {
-        model.addAttribute("identities", identities.execute(currentUser.currentUserUuid()));
-        if (linked != null) model.addAttribute("success", "success.linked");
-        return "linked-accounts";
+        return "redirect:/dashboard/account/linked-accounts";
     }
 
     @PostMapping("/profile/accounts/{identityUuid}/unlink")

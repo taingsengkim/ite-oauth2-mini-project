@@ -12,7 +12,7 @@ import java.net.URI;
 public class BrowserLoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
     private final BrowserRequestCache cache;
     public BrowserLoginSuccessHandler(BrowserRequestCache cache) {
-        this.cache = cache; setRequestCache(cache); setDefaultTargetUrl("/dashboard/index.html");
+        this.cache = cache; setRequestCache(cache); setDefaultTargetUrl("/dashboard/");
     }
     @Override public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException, ServletException {

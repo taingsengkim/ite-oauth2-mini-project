@@ -1,3 +1,5 @@
+import { RecentSavedRecord } from '@/components/shared/recent-saved-record'
+import { useRecentSave, rememberSave, clearRecentSave } from '@/lib/recent-save'
 import { PermissionSearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -11,6 +13,7 @@ import { PermissionFormDialog, PermissionActionDialog, PermissionDetailsDialog }
 import type { Permission, PermissionQuery, PermissionAction, PermissionAccess } from '../types'
 
 export function PermissionsPage() {
+  const recent = useRecentSave('permissions')
   const [access, setAccess] = useState<PermissionAccess>({ create: false, update: false, delete: false })
   const [sessionError, setSessionError] = useState<string | null>(null)
 
@@ -40,7 +43,7 @@ export function PermissionsPage() {
   }, [query, key])
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
-  return <section aria-label="Permission management" className="space-y-4">
+  return <section aria-label="Permission management" className="space-y-4"><RecentSavedRecord resource="permissions" onView={setView} />
     {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -56,7 +59,7 @@ export function PermissionsPage() {
           <div className="overflow-hidden rounded-lg border"><Table><caption className="sr-only">Permission definitions and management actions</caption>
             <TableHeader><TableRow>{['Permission', 'Resource', 'Action', 'Type', 'Status', 'Actions'].map((heading) => <TableHead key={heading}>{heading}</TableHead>)}</TableRow></TableHeader>
             <TableBody>{!data.content.length ? <TableRow><TableCell colSpan={6} className="h-28 text-center text-muted-foreground">No matching permissions.</TableCell></TableRow>
-              : data.content.map((permission) => <TableRow key={permission.uuid} className="cursor-pointer" onClick={(event) => {
+              : data.content.map((permission) => <TableRow key={permission.uuid} className={`cursor-pointer ${recent?.id === permission.uuid ? 'bg-emerald-500/5 ring-1 ring-inset ring-emerald-500/20' : ''}`} onClick={(event) => {
                 const target = event.target
                 if (target instanceof Element && event.currentTarget.contains(target) && !target.closest('button,[role="menuitem"],[data-permission-actions]') && !window.getSelection()?.toString()) setView(permission.uuid)
               }}>
@@ -80,9 +83,9 @@ export function PermissionsPage() {
             <Button variant="outline" disabled={query.page + 1 >= data.page.totalPages} onClick={() => setQuery((current) => ({ ...current, page: current.page + 1 }))}>Next</Button></div></div>
         </>}
     {editor && <PermissionFormDialog key={editor.permission?.uuid || 'create'} permission={editor.permission} onClose={() => setEditor(null)} onSaved={(permission) => {
-      setSuccess(`Permission ${permission.name} saved successfully.`); setEditor(null); setRevision((value) => value + 1); setView(permission.uuid)
+      setSuccess(`Permission ${permission.name} saved successfully.`); setEditor(null); setRevision((value) => value + 1); rememberSave('permissions', permission.uuid, `Permission ${permission.name} saved successfully.`)
     }} />}
     {view && <PermissionDetailsDialog key={view} uuid={view} onClose={() => setView(null)} />}
-    {action && <PermissionActionDialog permission={action.permission} action={action.type} onClose={() => setAction(null)} onDone={(message) => { setAction(null); setSuccess(message); setRevision((value) => value + 1) }} />}
+    {action && <PermissionActionDialog permission={action.permission} action={action.type} onClose={() => setAction(null)} onDone={(message) => { if (action.type === 'delete') clearRecentSave('permissions', action.permission.uuid); else rememberSave('permissions', action.permission.uuid, message); setAction(null); setSuccess(message); setRevision((value) => value + 1) }} />}
   </section>
 }

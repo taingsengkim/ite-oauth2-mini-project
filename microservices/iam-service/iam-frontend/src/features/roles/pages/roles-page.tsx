@@ -1,3 +1,5 @@
+import { RecentSavedRecord } from '@/components/shared/recent-saved-record'
+import { useRecentSave, rememberSave, clearRecentSave } from '@/lib/recent-save'
 import { useNavigate } from 'react-router-dom'
 import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
@@ -14,6 +16,7 @@ import type { Page, Role, RoleAccess, RoleSummary } from '../types'
 
 const noAccess: RoleAccess = { create: false, update: false, delete: false, assign: false, browsePermissions: false }
 export function RolesPage() {
+  const recent = useRecentSave('roles')
   const navigate = useNavigate()
   const [access, setAccess] = useState(noAccess)
   const [sessionError, setSessionError] = useState<string | null>(null)
@@ -58,12 +61,12 @@ export function RolesPage() {
     setSuccess(`Role ${role.name} was ${editor?.role ? 'updated' : 'created'} successfully.`)
     setEditor(null)
     setRevision((value) => value + 1)
-    void navigate('/roles/' + encodeURIComponent(role.uuid))
+    rememberSave('roles', role.uuid, `Role ${role.name} saved successfully.`)
   }
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
 
-  return <section className="space-y-4" aria-label="Role management">
+  return <section className="space-y-4" aria-label="Role management"><RecentSavedRecord resource="roles" />
     {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -83,7 +86,7 @@ export function RolesPage() {
           <caption className="sr-only">Roles and their management actions</caption>
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Description</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
           <TableBody>{!data.content.length ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-muted-foreground">No roles match your search.</TableCell></TableRow>
-            : data.content.map((role) => <TableRow key={role.uuid} className="cursor-pointer" onClick={(event) => {
+            : data.content.map((role) => <TableRow key={role.uuid} className={`cursor-pointer ${recent?.id === role.uuid ? 'bg-emerald-500/5 ring-1 ring-inset ring-emerald-500/20' : ''}`} onClick={(event) => {
               const target = event.target
               if (target instanceof Element && event.currentTarget.contains(target) && !target.closest('button,[role="menuitem"],[data-role-actions]') && !window.getSelection()?.toString()) void navigate('/roles/' + encodeURIComponent(role.uuid))
             }}>
@@ -108,6 +111,6 @@ export function RolesPage() {
             <Button variant="outline" disabled={query.page + 1 >= data.page.totalPages} onClick={() => setQuery((current) => ({ ...current, page: current.page + 1 }))}>Next</Button></div></div>
       </>}
     {editor && <RoleFormDialog key={editor.role?.uuid || 'create'} role={editor.role} onClose={() => setEditor(null)} onSaved={saved} />}
-    {action && <RoleActionDialog role={action.role} action={action.type} onClose={() => setAction(null)} onDone={(message) => { setAction(null); setSuccess(message); setRevision((value) => value + 1) }} />}
+    {action && <RoleActionDialog role={action.role} action={action.type} onClose={() => setAction(null)} onDone={(message) => { if (action.type === 'delete') clearRecentSave('roles', action.role.uuid); else rememberSave('roles', action.role.uuid, message); setAction(null); setSuccess(message); setRevision((value) => value + 1) }} />}
   </section>
 }

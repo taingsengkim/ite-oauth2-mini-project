@@ -15,7 +15,7 @@ public class LoginPageController {
         boolean loggedOut = session != null && Boolean.TRUE.equals(session.getAttribute("iam.logoutNotice"));
         if (session != null) session.removeAttribute("iam.logoutNotice");
         if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken))
-            return "redirect:/dashboard/index.html";
+            return "redirect:/dashboard/";
         model.addAttribute("loginError", request.getParameterMap().containsKey("error"));
         String error = request.getParameter("error");
         model.addAttribute("loginErrorKey", "account_link_required".equals(error) ? "login.linkRequired"

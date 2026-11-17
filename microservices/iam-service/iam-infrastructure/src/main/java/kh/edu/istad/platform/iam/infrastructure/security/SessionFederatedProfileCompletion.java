@@ -110,7 +110,7 @@ public class SessionFederatedProfileCompletion implements FederatedProfileComple
             }
         }
         cache.removeRequest(request, response);
-        return "/";
+        return "/dashboard/";
     }
 
     private ServletRequestAttributes attributes() {
