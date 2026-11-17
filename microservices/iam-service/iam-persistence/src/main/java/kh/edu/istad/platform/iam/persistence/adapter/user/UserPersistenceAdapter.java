@@ -63,6 +63,9 @@ public class UserPersistenceAdapter implements UserRepository {
 
     @Override
     public PageResult<User> findAll(UserFilterQuery query) {
+        var requestedPage = PersistencePageQueries.page(query.pageQuery(),
+                "updatedAt", Set.of("username", "email", "createdAt", "updatedAt", "uuid", "enabled"));
+        var stableSort = requestedPage.getSort().and(Sort.by("uuid"));
         Specification<UserEntity> specification = (entity, criteria, builder) -> {
             var predicates = new ArrayList<Predicate>();
             predicates.add(builder.isFalse(entity.get("deleted")));
@@ -78,10 +81,19 @@ public class UserPersistenceAdapter implements UserRepository {
                     builder.like(builder.lower(entity.get("familyName")), pattern, '\\')
                 ));
             }
+            // Apply priority before pagination; filters and total counts remain unchanged.
+            if (query.priorityUuid() != null && criteria.getResultType() != Long.class && criteria.getResultType() != long.class) {
+                var order = new ArrayList<jakarta.persistence.criteria.Order>();
+                order.add(builder.asc(builder.<Integer>selectCase()
+                        .when(builder.equal(entity.get("uuid"), query.priorityUuid()), 0).otherwise(1)));
+                stableSort.forEach(item -> order.add(item.isAscending()
+                        ? builder.asc(entity.get(item.getProperty())) : builder.desc(entity.get(item.getProperty()))));
+                criteria.orderBy(order);
+            }
             return builder.and(predicates.toArray(Predicate[]::new));
         };
-        var result = repository.findAll(specification, PersistencePageQueries.page(query.pageQuery(),
-                "username", Set.of("username", "email", "createdAt", "updatedAt", "uuid", "enabled")));
+        var result = repository.findAll(specification, PageRequest.of(requestedPage.getPageNumber(), requestedPage.getPageSize(),
+                query.priorityUuid() == null ? stableSort : Sort.unsorted()));
         return new PageResult<>(result.getContent().stream().map(mapper::toDomain).toList(),
                 result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
     }

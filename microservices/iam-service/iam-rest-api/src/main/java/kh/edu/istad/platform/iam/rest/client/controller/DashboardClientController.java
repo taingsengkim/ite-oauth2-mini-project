@@ -18,8 +18,9 @@ public class DashboardClientController {
     @GetMapping public ResponseEntity<PageResult<ManagedClientResult>> list(
             @RequestParam(name = "search", defaultValue = "") String search,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(clients.list(search, page, size));
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "priorityId", required = false) String priorityId) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(clients.list(search, page, size, priorityId));
     }
 
     @GetMapping("/{id}") public ResponseEntity<ManagedClientResult> get(@PathVariable("id") String id) {

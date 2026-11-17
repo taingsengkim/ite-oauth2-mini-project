@@ -5,7 +5,8 @@ import kh.edu.istad.platform.iam.dto.pagination.PageResult;
 import java.util.Optional;
 
 public interface ClientManagementRepository {
-    PageResult<ManagedClientResult> list(String search, int page, int size);
+    default PageResult<ManagedClientResult> list(String search, int page, int size) { return list(search, page, size, null); }
+    PageResult<ManagedClientResult> list(String search, int page, int size, String priorityId);
     Optional<ManagedClientResult> findById(String id);
     Optional<ManagedClientResult> findByIdForUpdate(String id);
     IssuedClientResult create(ClientDefinition definition);

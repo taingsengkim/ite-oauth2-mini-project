@@ -43,14 +43,15 @@ public class PermissionController {
     public PermissionPageResponse list(
             @RequestParam(name = "page", defaultValue = "0") @Min(0) int page,
             @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(100) int size,
-            @RequestParam(name = "sort", defaultValue = "name,asc") String sort,
+            @RequestParam(name = "sort", defaultValue = "updatedAt,desc") String sort,
             @RequestParam(name = "search", required = false) @Size(max = 255) String search,
             @RequestParam(name = "resource", required = false) @Size(max = 50) String resource,
             @RequestParam(name = "action", required = false) @Size(max = 50) String action,
-            @RequestParam(name = "active", required = false) Boolean active
+            @RequestParam(name = "active", required = false) Boolean active,
+            @RequestParam(name = "priorityUuid", required = false) java.util.UUID priorityUuid
     ) {
         var result = listPermissionsUseCase.execute(
-                new PermissionFilterQuery(page, size, sort, search, resource, action, active));
+                new PermissionFilterQuery(page, size, sort, search, resource, action, active, priorityUuid));
         return new PermissionPageResponse(result.content().stream().map(mapper::toResponse).toList(),
                 new PermissionPageResponse.PageMetadata(
                         result.page(), result.size(), result.totalElements(), result.totalPages()));

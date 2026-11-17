@@ -34,7 +34,8 @@ public class WebPageAdvice {
     private String languageUrl(HttpServletRequest request, String language) {
         var builder = UriComponentsBuilder.fromPath(request.getRequestURI());
         request.getParameterMap().forEach((name, values) -> {
-            if (!"lang".equals(name)) {
+            // Never copy POST fields or verification/password material into language-switch URLs.
+            if ("GET".equals(request.getMethod()) && java.util.Set.of("view", "error", "registered", "linked", "expired").contains(name)) {
                 for (String value : values) {
                     builder.queryParam(UriUtils.encode(name, StandardCharsets.UTF_8),
                             UriUtils.encode(value, StandardCharsets.UTF_8));

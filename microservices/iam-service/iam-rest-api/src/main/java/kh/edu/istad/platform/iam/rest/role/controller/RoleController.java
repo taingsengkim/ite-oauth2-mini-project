@@ -42,10 +42,11 @@ public class RoleController {
     @GetMapping
     public RolePageResponse list(@RequestParam(name = "page", defaultValue = "0") @Min(0) int page,
                                  @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(100) int size,
-                                 @RequestParam(name = "sort", defaultValue = "name,asc") String sort,
+                                 @RequestParam(name = "sort", defaultValue = "updatedAt,desc") String sort,
                                  @RequestParam(name = "search", required = false) String search,
-                                 @RequestParam(name = "active", required = false) Boolean active) {
-        var result = listRoles.execute(new RoleFilterQuery(page, size, sort, search, active));
+                                 @RequestParam(name = "active", required = false) Boolean active,
+                                 @RequestParam(name = "priorityUuid", required = false) java.util.UUID priorityUuid) {
+        var result = listRoles.execute(new RoleFilterQuery(page, size, sort, search, active, priorityUuid));
         return new RolePageResponse(result.content().stream().map(mapper::toResponse).toList(),
                 new RolePageResponse.PageMetadata(result.page(), result.size(), result.totalElements(), result.totalPages()));
     }

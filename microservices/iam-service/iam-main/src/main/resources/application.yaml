@@ -85,6 +85,8 @@ server:
   forward-headers-strategy: framework
 
 iam:
+  registration:
+    verification-enabled: ${IAM_REGISTRATION_VERIFICATION_ENABLED:${IAM_RECOVERY_ENABLED:false}}
   geoip:
     database: ${IAM_GEOIP_DATABASE:}
   recovery:

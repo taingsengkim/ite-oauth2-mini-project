@@ -124,7 +124,7 @@ public class DashboardUserController {
             @RequestParam(name = "size", defaultValue = "20")
             @Min(1) @Max(100) int size,
 
-            @RequestParam(name = "sort", defaultValue = "username,asc")
+            @RequestParam(name = "sort", defaultValue = "updatedAt,desc")
             String sort,
 
             @RequestParam(name = "search", required = false)
@@ -133,10 +133,11 @@ public class DashboardUserController {
             @RequestParam(name = "enabled", required = false)
             Boolean enabled,
             @RequestParam(name = "locked", required = false) Boolean locked,
-            @RequestParam(name = "emailVerified", required = false) Boolean emailVerified
+            @RequestParam(name = "emailVerified", required = false) Boolean emailVerified,
+            @RequestParam(name = "priorityUuid", required = false) UUID priorityUuid
     ) {
         var result = listUsersUseCase.execute(
-                new UserFilterQuery(page, size, sort, search, enabled, locked, emailVerified)
+                new UserFilterQuery(page, size, sort, search, enabled, locked, emailVerified, priorityUuid)
         );
 
         return new UserPageResponse(

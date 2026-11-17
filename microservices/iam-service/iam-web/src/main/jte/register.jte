@@ -9,6 +9,7 @@
 <div class="eyebrow">${ui.t("common.account")}</div>
 <h1>${ui.t("register.title")}</h1>
 <p class="page-description">${ui.t("register.subtitle")}</p>
+<p class="registration-hint">${ui.t("verification.registrationHint")}</p>
 @template.components.feedback(ui, error)
 <form method="post" action="/register" class="form-stack">
     @template.components.csrf(ui)

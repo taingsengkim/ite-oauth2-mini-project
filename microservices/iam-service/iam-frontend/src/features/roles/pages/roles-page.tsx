@@ -1,4 +1,3 @@
-import { RecentSavedRecord } from '@/components/shared/recent-saved-record'
 import { useRecentSave, rememberSave, clearRecentSave } from '@/lib/recent-save'
 import { useNavigate } from 'react-router-dom'
 import { SearchForm } from '@/components/shared/search-form'
@@ -26,7 +25,7 @@ export function RolesPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [editor, setEditor] = useState<{ role?: RoleSummary } | null>(null)
   const [action, setAction] = useState<{ role: RoleSummary; type: RoleAction } | null>(null)
-  const key = JSON.stringify([query, revision])
+  const key = JSON.stringify([query, revision, recent?.id])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -44,7 +43,7 @@ export function RolesPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    listRoles(query, controller.signal).then((data) => {
+    listRoles({ ...query, priorityUuid: recent?.id }, controller.signal).then((data) => {
       if (controller.signal.aborted) return
       if (query.page > 0 && query.page >= data.page.totalPages) {
         setQuery((current) => ({ ...current, page: Math.max(0, data.page.totalPages - 1) }))
@@ -55,7 +54,7 @@ export function RolesPage() {
       if (!controller.signal.aborted) setResult({ key, error: failure instanceof Error ? failure.message : 'Could not load roles.' })
     })
     return () => controller.abort()
-  }, [query, key])
+  }, [query, key, recent?.id])
 
   function saved(role: Role) {
     setSuccess(`Role ${role.name} was ${editor?.role ? 'updated' : 'created'} successfully.`)
@@ -66,7 +65,7 @@ export function RolesPage() {
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
 
-  return <section className="space-y-4" aria-label="Role management"><RecentSavedRecord resource="roles" />
+  return <section className="space-y-4" aria-label="Role management">
     {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">

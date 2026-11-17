@@ -25,10 +25,13 @@ public class ManageClientsUseCase {
     private final ClientManagementRepository repository;
     private final kh.edu.istad.platform.iam.port.out.configuration.SystemConfigurationRepository configuration;
 
-    public PageResult<ManagedClientResult> list(String search, int page, int size) {
+    public PageResult<ManagedClientResult> list(String search, int page, int size) { return list(search, page, size, null); }
+
+    public PageResult<ManagedClientResult> list(String search, int page, int size, String priorityId) {
+        if (priorityId != null) validateId(priorityId);
         require(page >= 0 && page <= 100000 && size >= 1 && size <= 100, "Invalid client pagination");
         require(search == null || search.length() <= 255, "Client search must be at most 255 characters");
-        return repository.list(search == null ? "" : search.strip(), page, size);
+        return repository.list(search == null ? "" : search.strip(), page, size, priorityId);
     }
 
     public ManagedClientResult get(String id) {

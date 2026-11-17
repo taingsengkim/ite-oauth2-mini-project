@@ -3,7 +3,8 @@ package kh.edu.istad.platform.iam.dto.permission;
 import kh.edu.istad.platform.iam.dto.pagination.PageQuery;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
 
-public record PermissionFilterQuery(int page, int size, String sort, String search, String resource, String action, Boolean active) {
+public record PermissionFilterQuery(int page, int size, String sort, String search, String resource, String action, Boolean active, java.util.UUID priorityUuid) {
+    public PermissionFilterQuery(int page, int size, String sort, String search, String resource, String action, Boolean active) { this(page, size, sort, search, resource, action, active, null); }
     public PermissionFilterQuery {
         new PageQuery(page, size, sort);
         if (search != null && search.length() > 255) {

@@ -16,3 +16,12 @@ document.querySelectorAll("form[data-confirm]").forEach(form => {
 window.addEventListener("pageshow", event => {
     if (event.persisted) window.location.reload();
 });
+
+// Convenience countdown only; the server independently enforces resend throttling.
+document.querySelectorAll('[data-resend-cooldown]').forEach(button => {
+    let seconds = Math.min(60, Math.max(0, Number(button.dataset.resendCooldown) || 0));
+    const label = button.querySelector('[data-resend-seconds]');
+    const update = () => { button.disabled = seconds > 0; if (label) label.textContent = seconds > 0 ? '(' + seconds + 's)' : ''; };
+    update();
+    if (seconds > 0) { const timer = window.setInterval(() => { seconds--; update(); if (seconds <= 0) window.clearInterval(timer); }, 1000); }
+});

@@ -123,3 +123,8 @@ html.dark{--ink:#fafafa;--muted:#a3a3a3;--teal:#e5e5e5;--teal-dark:#d4d4d4;--tea
  .auth-login .auth-card h1,.auth-login .auth-card .page-description{text-align:left}
  html[lang=km] .auth-welcome h2{letter-spacing:0;font-size:34px;line-height:1.7}
 }
+
+.auth-shell-neutral .registration-hint{margin:-8px 0 22px;padding:12px;border-radius:8px;background:var(--auth-secondary);color:var(--muted);font-size:12px;line-height:1.8}
+.auth-shell-neutral input.verification-code{height:56px;text-align:center;font-size:26px;font-weight:600;letter-spacing:.4em;font-variant-numeric:tabular-nums;padding-left:22px}
+.verification-help{font-size:12px;color:var(--muted);line-height:1.8}
+.verification-actions{display:grid;gap:8px;margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}

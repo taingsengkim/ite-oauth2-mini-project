@@ -4,8 +4,9 @@ import type { Role, RoleInput, RoleSummary, Permission, AssignedPermission, Page
 const base = '/dashboard-api/roles'
 const path = (uuid: string) => `${base}/${encodeURIComponent(uuid)}`
 
-export function listRoles(query: { page: number; search: string; active: string }, signal?: AbortSignal) {
-  const params = new URLSearchParams({ page: String(query.page), size: '20', search: query.search })
+export function listRoles(query: { page: number; search: string; active: string; priorityUuid?: string }, signal?: AbortSignal) {
+  const params = new URLSearchParams({ page: String(query.page), size: '20', search: query.search, sort: 'updatedAt,desc' })
+  if (query.priorityUuid) params.set('priorityUuid', query.priorityUuid)
   if (query.active !== '') params.set('active', query.active)
   return requestJson<Page<RoleSummary>>(`${base}?${params}`, { signal })
 }

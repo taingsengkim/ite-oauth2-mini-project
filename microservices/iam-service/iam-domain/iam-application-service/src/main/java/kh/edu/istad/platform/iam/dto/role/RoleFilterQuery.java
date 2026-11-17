@@ -3,7 +3,8 @@ package kh.edu.istad.platform.iam.dto.role;
 import kh.edu.istad.platform.iam.dto.pagination.PageQuery;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
 
-public record RoleFilterQuery(int page, int size, String sort, String search, Boolean active) {
+public record RoleFilterQuery(int page, int size, String sort, String search, Boolean active, java.util.UUID priorityUuid) {
+    public RoleFilterQuery(int page, int size, String sort, String search, Boolean active) { this(page, size, sort, search, active, null); }
     public RoleFilterQuery {
         new PageQuery(page, size, sort);
         if (search != null && search.length() > 255) {

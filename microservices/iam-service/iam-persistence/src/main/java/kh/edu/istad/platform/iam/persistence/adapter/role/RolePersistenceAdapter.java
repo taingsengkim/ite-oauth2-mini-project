@@ -12,6 +12,7 @@ import kh.edu.istad.platform.iam.port.out.role.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import kh.edu.istad.platform.iam.persistence.entity.role.RoleEntity;
 import kh.edu.istad.platform.iam.persistence.query.PersistencePageQueries;
+import kh.edu.istad.platform.iam.persistence.query.PrioritizedPage;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ public class RolePersistenceAdapter implements RoleRepository {
     @Override
     @Transactional(readOnly = true)
     public PageResult<Role> findAll(RoleFilterQuery query) {
+        var ordering = PrioritizedPage.recent(query.pageQuery(), Set.of("name", "createdAt", "updatedAt", "uuid", "active"), query.priorityUuid());
         Specification<RoleEntity> specification = (entity, criteria, builder) -> {
             var predicates = new ArrayList<Predicate>();
             predicates.add(builder.isFalse(entity.get("deleted")));
@@ -63,10 +65,10 @@ public class RolePersistenceAdapter implements RoleRepository {
                     builder.like(builder.lower(entity.get("description")), pattern, '\\')
                 ));
             }
+            ordering.order(entity, criteria, builder);
             return builder.and(predicates.toArray(Predicate[]::new));
         };
-        var result = repository.findAll(specification, PersistencePageQueries.page(query.pageQuery(),
-                "name", Set.of("name", "createdAt", "updatedAt", "uuid", "active")));
+        var result = repository.findAll(specification, ordering.pageable());
         return new PageResult<>(result.getContent().stream().map(mapper::toDomain).toList(),
                 result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
     }

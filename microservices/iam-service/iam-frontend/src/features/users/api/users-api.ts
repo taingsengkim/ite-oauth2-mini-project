@@ -61,6 +61,7 @@ type ListUsersOptions = {
     locked?: string
     emailVerified?: string
     sort?: string
+    priorityUuid?: string
     signal?: AbortSignal
 }
 
@@ -68,7 +69,7 @@ export async function listUsers({
                                     page = 0,
                                     size = 20,
                                     search = '',
-                                    enabled = '', locked = '', emailVerified = '', sort = 'username,asc',
+                                    enabled = '', locked = '', emailVerified = '', sort = 'updatedAt,desc', priorityUuid,
                                     signal,
                                 }: ListUsersOptions = {}): Promise<UserPageResponse> {
     const params = new URLSearchParams({
@@ -84,6 +85,8 @@ export async function listUsers({
     for (const [key, value] of Object.entries({ enabled, locked, emailVerified })) {
         if (value === 'true' || value === 'false') params.set(key, value)
     }
+
+    if (priorityUuid) params.set('priorityUuid', priorityUuid)
 
     const response = await fetch(`/dashboard-api/users?${params}`, {
         credentials: 'same-origin',

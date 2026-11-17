@@ -144,7 +144,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                HttpMethod.POST, "/api/auth/register"
+                                HttpMethod.POST, "/api/auth/register", "/api/auth/register/verify", "/api/auth/register/resend"
                         ).permitAll()
 
                         .requestMatchers(
@@ -366,7 +366,7 @@ public class SecurityConfig {
                                 registrations.findByRegistrationId("telegram").getRedirectUri()),
                         org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/error", "/register", "/register/complete", "/register/complete/cancel", "/assets/**", "/account/identities/result",
+                        .requestMatchers("/login", "/error", "/register", "/register/verify", "/register/resend", "/register/cancel", "/register/complete", "/register/complete/cancel", "/assets/**", "/account/identities/result",
                                 "/dashboard/recovery.html", "/dashboard/assets/**").permitAll()
                         .anyRequest().authenticated()
                 )

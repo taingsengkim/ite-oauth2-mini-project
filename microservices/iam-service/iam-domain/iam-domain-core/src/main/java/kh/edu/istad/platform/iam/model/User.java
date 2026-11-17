@@ -285,6 +285,11 @@ public final class User {
         deletedBy = actor;
     }
 
+    public void verifyEmail(String actor, Instant now) {
+        touch(actor, now);
+        emailVerified = true;
+    }
+
     public void changePasswordHash(
             String passwordHash,
             String actor,

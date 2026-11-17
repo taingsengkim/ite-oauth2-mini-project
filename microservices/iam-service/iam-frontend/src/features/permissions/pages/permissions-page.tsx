@@ -1,4 +1,3 @@
-import { RecentSavedRecord } from '@/components/shared/recent-saved-record'
 import { useRecentSave, rememberSave, clearRecentSave } from '@/lib/recent-save'
 import { PermissionSearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
@@ -24,7 +23,7 @@ export function PermissionsPage() {
   const [editor, setEditor] = useState<{ permission?: Permission } | null>(null)
   const [view, setView] = useState<string | null>(null)
   const [action, setAction] = useState<{ permission: Permission; type: PermissionAction } | null>(null)
-  const key = JSON.stringify([query, revision])
+  const key = JSON.stringify([query, revision, recent?.id])
   useEffect(() => {
     const controller = new AbortController()
     getDashboardSession(controller.signal).then((session) => {
@@ -34,16 +33,16 @@ export function PermissionsPage() {
   }, [])
   useEffect(() => {
     const controller = new AbortController()
-    listPermissions(query, controller.signal).then((data) => {
+    listPermissions({ ...query, priorityUuid: recent?.id }, controller.signal).then((data) => {
       if (controller.signal.aborted) return
       if (query.page > 0 && query.page >= data.page.totalPages) { setQuery((current) => ({ ...current, page: Math.max(0, data.page.totalPages - 1) })); return }
       setResult({ key, data })
     }).catch((failure: unknown) => { if (!controller.signal.aborted) setResult({ key, error: failure instanceof Error ? failure.message : 'Could not load permissions.' }) })
     return () => controller.abort()
-  }, [query, key])
+  }, [query, key, recent?.id])
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
-  return <section aria-label="Permission management" className="space-y-4"><RecentSavedRecord resource="permissions" onView={setView} />
+  return <section aria-label="Permission management" className="space-y-4">
     {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">

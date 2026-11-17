@@ -8,6 +8,7 @@ import kh.edu.istad.platform.iam.model.Permission;
 import kh.edu.istad.platform.iam.persistence.entity.permission.PermissionEntity;
 import kh.edu.istad.platform.iam.persistence.mapper.permission.PermissionPersistenceMapper;
 import kh.edu.istad.platform.iam.persistence.query.PersistencePageQueries;
+import kh.edu.istad.platform.iam.persistence.query.PrioritizedPage;
 import kh.edu.istad.platform.iam.persistence.repository.permission.PermissionJpaRepository;
 import kh.edu.istad.platform.iam.port.out.permission.PermissionRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -46,6 +47,7 @@ public class PermissionPersistenceAdapter implements PermissionRepository {
 
     @Override
     public PageResult<Permission> findAll(PermissionFilterQuery query) {
+        var ordering = PrioritizedPage.recent(query.pageQuery(), Set.of("name", "resource", "action", "uuid", "active", "createdAt", "updatedAt"), query.priorityUuid());
         Specification<PermissionEntity> specification = (entity, criteria, builder) -> {
             var predicates = new ArrayList<Predicate>();
             predicates.add(builder.isFalse(entity.get("deleted")));
@@ -58,10 +60,10 @@ public class PermissionPersistenceAdapter implements PermissionRepository {
                         builder.like(builder.lower(entity.get("name")), pattern, '\\'),
                         builder.like(builder.lower(entity.get("description")), pattern, '\\')));
             }
+            ordering.order(entity, criteria, builder);
             return builder.and(predicates.toArray(Predicate[]::new));
         };
-        var page = repository.findAll(specification, PersistencePageQueries.page(query.pageQuery(), "name",
-                Set.of("name", "resource", "action", "uuid", "active", "createdAt", "updatedAt")));
+        var page = repository.findAll(specification, ordering.pageable());
         return new PageResult<>(page.getContent().stream().map(mapper::toDomain).toList(),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }

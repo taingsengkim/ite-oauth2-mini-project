@@ -2,16 +2,12 @@ package kh.edu.istad.platform.iam.usecase.user;
 
 import kh.edu.istad.platform.iam.application.exception.ResourceConflictException;
 import kh.edu.istad.platform.iam.dto.user.AssignRolesToUserCommand;
-import kh.edu.istad.platform.iam.dto.user.RegisterUserCommand;
-import kh.edu.istad.platform.iam.dto.user.UserResult;
+import kh.edu.istad.platform.iam.port.out.user.PendingRegistrationRepository.Pending;
 import kh.edu.istad.platform.iam.exception.IamDomainException;
-import kh.edu.istad.platform.iam.mapper.user.UserResultMapper;
 import kh.edu.istad.platform.iam.model.User;
 import kh.edu.istad.platform.iam.port.out.CurrentActorProvider;
-import kh.edu.istad.platform.iam.port.out.PasswordHasher;
 import kh.edu.istad.platform.iam.port.out.role.RoleRepository;
 import kh.edu.istad.platform.iam.port.out.user.UserRepository;
-import kh.edu.istad.platform.iam.validation.PasswordPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,32 +22,18 @@ import java.util.Objects;
 public class RegisterUserUseCase {
 
     private final UserRepository repository;
-    private final PasswordHasher passwordHasher;
     private final CurrentActorProvider actorProvider;
-    private final UserResultMapper mapper;
     private final Clock clock;
 
     private final RoleRepository roles;
     private final AssignRolesToUserUseCase assignRoles;
-    private final PasswordPolicy passwordPolicy;
 
-    @Transactional
-    public UserResult execute(RegisterUserCommand command) {
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public java.util.UUID execute(Pending command) {
         Objects.requireNonNull(command, "command");
 
         String username = required(command.username(), "Username");
         String email = required(command.email(), "Email").toLowerCase(Locale.ROOT);
-
-        String password = command.password();
-        passwordPolicy.validate(password, command.confirmPassword());
-
-        if (password == null || password.isBlank()) {
-            throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "Password is required");
-        }
-
-        if (!password.equals(command.confirmPassword())) {
-            throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR, "Passwords do not match");
-        }
 
         if (repository.findByUsername(username).isPresent()) {
             throw new ResourceConflictException(
@@ -70,7 +52,7 @@ public class RegisterUserUseCase {
 
         defaultRole.requireAssignable();
 
-        String passwordHash = passwordHasher.hash(password);
+        String passwordHash = command.passwordHash();
 
         User user = User.createLocal(
                 username,
@@ -83,6 +65,7 @@ public class RegisterUserUseCase {
                 clock.instant()
         );
 
+        user.verifyEmail(actorProvider.currentActor(), clock.instant());
         User saved = repository.create(user);
 
         assignRoles.execute(new AssignRolesToUserCommand(
@@ -92,7 +75,7 @@ public class RegisterUserUseCase {
                 "Default role assigned during registration"
         ));
 
-        return mapper.toResult(saved);
+        return saved.getUuid();
     }
 
     private static String required(String value, String field) {

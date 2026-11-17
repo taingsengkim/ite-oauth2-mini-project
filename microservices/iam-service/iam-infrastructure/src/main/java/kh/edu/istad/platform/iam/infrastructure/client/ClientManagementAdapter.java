@@ -35,12 +35,12 @@ public class ClientManagementAdapter implements ClientManagementRepository {
     private final Clock clock;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    @Override public PageResult<ManagedClientResult> list(String search, int page, int size) {
+    @Override public PageResult<ManagedClientResult> list(String search, int page, int size, String priorityId) {
         String pattern = "%" + search.toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
         String where = " WHERE lower(client_id) LIKE ? ESCAPE '!' OR lower(client_name) LIKE ? ESCAPE '!'";
         Long count = jdbc.queryForObject("SELECT count(*) FROM oauth2_registered_client" + where, Long.class, pattern, pattern);
         var ids = jdbc.queryForList("SELECT id FROM oauth2_registered_client" + where
-                + " ORDER BY lower(client_name), id LIMIT ? OFFSET ?", String.class, pattern, pattern, size, (long) page * size);
+                + " ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END, updated_at DESC, id LIMIT ? OFFSET ?", String.class, pattern, pattern, priorityId, size, (long) page * size);
         var content = ids.stream().map(clients::findById).filter(Objects::nonNull).map(this::view).toList();
         long total = count == null ? 0 : count;
         return new PageResult<>(content, page, size, total, (int) Math.ceil((double) total / size));
