@@ -15,6 +15,7 @@ public class DashboardRouteController {
             "/dashboard/{resource:users|roles|clients}/{id}/edit/",
             "/dashboard/users/{id}/{action:roles|permissions|sessions|login-history|reset-password|enable|disable|lock|unlock|delete}",
             "/dashboard/users/{id}/{action:roles|permissions|sessions|login-history|reset-password|enable|disable|lock|unlock|delete}/",
+            "/dashboard/account/profile/edit", "/dashboard/account/profile/edit/",
             "/dashboard/account/{page:profile|security|linked-accounts|sessions|login-history|activity|deactivation}",
             "/dashboard/account/{page:profile|security|linked-accounts|sessions|login-history|activity|deactivation}/"})
     public String dashboard() { return "forward:/dashboard/index.html"; }

@@ -371,6 +371,7 @@ public class SecurityConfig {
                                 registrations.findByRegistrationId("telegram").getRedirectUri()),
                         org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/.well-known/appspecific/com.chrome.devtools.json").permitAll()
                         .requestMatchers("/login", "/error", "/register", "/register/verify", "/register/resend", "/register/cancel", "/register/complete", "/register/complete/cancel", "/assets/**", "/account/identities/result",
                                 "/dashboard/recovery.html", "/dashboard/assets/**").permitAll()
                         .anyRequest().authenticated()

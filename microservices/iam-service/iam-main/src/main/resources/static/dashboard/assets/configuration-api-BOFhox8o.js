@@ -1,0 +1,1 @@
+import{or as e,sr as t}from"./language-switcher-ClvJ-813.js";function n(e){return t(`/dashboard-api/configuration`,{signal:e})}function r(t,n){return e(`/dashboard-api/configuration`,`PUT`,{version:t,policy:n})}function i(e){return t(`/dashboard-api/client-defaults`,{signal:e})}export{n,r,i as t};

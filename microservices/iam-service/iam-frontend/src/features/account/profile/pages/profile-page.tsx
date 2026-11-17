@@ -11,8 +11,12 @@ import { getAccountProfile, updateAccountProfile } from '../api/profile-api'
 import { profileSchema, validPictureUrl } from '../schemas'
 import type { AccountProfile, ProfileSaved } from '../schemas'
 import { LanguageSwitcher } from '@/components/shared/language-switcher'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ProfileOverview } from './profile-overview'
 
-export function ProfilePage() {
+export function ProfilePage({ edit = false }: { edit?: boolean }) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const { locale, setLocale } = useAccountLocale()
   const t = accountMessages[locale]
   const [revision, setRevision] = useState(0)
@@ -28,10 +32,12 @@ export function ProfilePage() {
     return () => controller.abort()
   }, [revision, setLocale])
   return <section aria-label={t.title} className="space-y-5">
+    {edit && <Link to="/account/profile" className="text-sm font-medium underline underline-offset-4">{locale === 'km' ? 'ត្រឡប់ទៅប្រវត្តិរូប' : 'Back to profile'}</Link>}
+    {!edit && location.state?.profileSaved && <p role="status" className="rounded-lg border bg-muted/40 p-4 text-sm">{t.saved}</p>}
     {saved && <div role="status" className="space-y-3 rounded-lg border bg-muted/40 p-4 text-sm"><p>{saved.signInRequired ? t.signedOut : t.saved}</p>{saved.signInRequired && <a className="font-medium underline" href="/dashboard/account/profile">{t.signIn}</a>}</div>}
     {saved?.signInRequired ? <p className="break-words text-sm">{t.username}: <strong>{saved.profile.username}</strong> · {t.email}: <strong>{saved.profile.email}</strong></p>
       : result?.key !== revision ? <p role="status">{t.loading}</p> : result.error ? <div className="space-y-3"><FormError message={result.error === 'unauthenticated' ? t.signInRequired : t.loadFailed} /><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>{t.retry}</Button>{result.error === 'unauthenticated' && <a className="ml-3 text-sm underline" href="/dashboard/account/profile">{t.signIn}</a>}</div>
-        : result.profile && <ProfileForm key={`${revision}-${result.profile.updatedAt}`} profile={result.profile} onReload={() => { setSaved(null); setRevision((value) => value + 1) }} onSaved={(value) => { setSaved(value); setResult({ key: revision, profile: value.profile }) }} />}
+        : result.profile && (edit ? <ProfileForm key={`${revision}-${result.profile.updatedAt}`} profile={result.profile} onReload={() => { setSaved(null); setRevision((value) => value + 1) }} onSaved={(value) => { if (value.signInRequired) { setSaved(value); setResult({ key: revision, profile: value.profile }) } else { void navigate('/account/profile', { replace: true, state: { profileSaved: true } }) } }} /> : <ProfileOverview profile={result.profile} />)}
   </section>
 }
 

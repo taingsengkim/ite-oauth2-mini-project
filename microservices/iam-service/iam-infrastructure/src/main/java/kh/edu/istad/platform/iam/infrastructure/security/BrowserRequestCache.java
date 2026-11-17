@@ -12,7 +12,7 @@ public class BrowserRequestCache extends HttpSessionRequestCache {
     static boolean utilityPath(String path) {
         if (path == null || path.equals("/")) return true;
         for (String prefix : new String[]{"/login", "/logout", "/error", "/register", "/assets", "/dashboard/assets",
-                "/api", "/dashboard-api", "/recovery-api", "/oauth2/authorization", "/profile"})
+                "/api", "/dashboard-api", "/recovery-api", "/oauth2/authorization", "/profile", "/.well-known/appspecific"})
             if (path.equals(prefix) || path.startsWith(prefix + "/")) return true;
         return path.equals("/dashboard/recovery.html") || path.equals("/account/identities/result") || path.equals("/favicon.ico");
     }

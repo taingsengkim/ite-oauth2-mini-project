@@ -71,6 +71,7 @@ export function DashboardRoutes({ session }: { session: DashboardSession }) {
     <Route index element={<LegacyEntry session={session} />} />
     <Route path="index.html" element={<LegacyEntry session={session} />} />
     <Route element={<DashboardShell session={session} />}>
+      <Route path="account/profile/edit" element={<ProfilePage key="edit" edit />} />
       <Route path="users/new" element={<RequirePage page="Users" session={session}><UserActionPage action="new" session={session} /></RequirePage>} />
       <Route path="users/login-history" element={<RequirePage page="Users" session={session}><UserActionPage action="all-history" session={session} /></RequirePage>} />
       {userActionRoutes.map(({ action }) => <Route key={action} path={'users/:id/' + action} element={<RequirePage page="Users" session={session}><UserActionPage action={action} session={session} /></RequirePage>} />)}
