@@ -13,6 +13,7 @@ public class DashboardRouteController {
             "/dashboard/{resource:users|roles|clients}/{id}/",
             "/dashboard/{resource:users|roles|clients}/{id}/edit",
             "/dashboard/{resource:users|roles|clients}/{id}/edit/",
+            "/dashboard/clients/{id}/{action:rotate|delete}", "/dashboard/clients/{id}/{action:rotate|delete}/",
             "/dashboard/users/{id}/{action:roles|permissions|sessions|login-history|reset-password|enable|disable|lock|unlock|delete}",
             "/dashboard/users/{id}/{action:roles|permissions|sessions|login-history|reset-password|enable|disable|lock|unlock|delete}/",
             "/dashboard/account/profile/edit", "/dashboard/account/profile/edit/",

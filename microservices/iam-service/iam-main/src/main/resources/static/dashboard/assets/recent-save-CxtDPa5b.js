@@ -1,0 +1,1 @@
+import{i as e,s as t}from"./jsx-runtime-ClFoqMj2.js";var n=t(e(),1),r={},i=new Set,a=0,o=e=>(i.add(e),()=>{i.delete(e)});function s(e,t,n){r[e]={id:t,message:n,revision:++a},i.forEach(e=>e())}function c(e,t){t&&r[e]?.id!==t||(delete r[e],i.forEach(e=>e()))}function l(e){return(0,n.useSyncExternalStore)(o,()=>r[e],()=>void 0)}export{s as n,l as r,c as t};

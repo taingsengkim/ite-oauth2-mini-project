@@ -27,18 +27,19 @@ export function ManagementResourcePage({ resource, edit = false, session }: { re
   const permission = resource === 'users' ? 'user' : resource === 'roles' ? 'role' : 'client'
   const canEdit = session.authorities.includes(permission + ':update')
   const close = () => { void navigate(edit ? details : root) }
-  const saved = () => { rememberSave(resource, id, 'Changes saved successfully.'); void navigate(resource === 'users' ? details : root, { replace: true, state: { saved: true } }) }
+  const saved = () => { rememberSave(resource, id, 'Changes saved successfully.'); void navigate(resource === 'roles' ? root : details, { replace: true, state: { saved: true } }) }
   if (edit && !canEdit) return <Navigate replace to={details} />
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="outline" render={<Link to={root} />}><ArrowLeft className="size-4" aria-hidden="true" />Back to {resource}</Button>{!edit && canEdit && <Button variant="outline" render={<Link to={details + '/edit'} />}><Pencil className="size-4" aria-hidden="true" />Edit {permission}</Button>}</div>
     {(notice || location.state?.notice || location.state?.saved) && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{notice || location.state?.notice || 'Changes saved successfully.'}</p>}
+    {resource === 'clients' && !edit && <nav aria-label="Client actions" className="flex flex-wrap gap-2">{canEdit && <Button variant="outline" render={<Link to={details + '/rotate'} />}>Rotate secret</Button>}{session.authorities.includes('client:delete') && <Button variant="destructive" render={<Link to={details + '/delete'} />}>Delete client</Button>}</nav>}
     {resource === 'users' && !edit && <nav aria-label="User management" className="flex flex-wrap gap-2">{userActionRoutes.filter(route => ['roles','permissions','sessions','login-history','reset-password'].includes(route.action) && session.authorities.includes(route.authority)).map(route => <Button key={route.action} variant="outline" size="sm" render={<Link to={details + '/' + route.action} />}>{route.label}</Button>)}</nav>}
     <ManagementPageContext value={true}>
       {resource === 'users' && (edit ? <EditUserDialog key={id} uuid={id} onClose={close} onSaved={saved} /> : <UserDetailsPanel key={id} uuid={id} onClose={close} />)}
       {resource === 'roles' && (edit ? <RoleEditPage key={id} id={id} onClose={close} onSaved={saved} /> : <RoleDetailsDialog key={id} uuid={id} onClose={close} onChanged={message => { rememberSave('roles', id, message); setNotice(message); void navigate(root) }} access={{ create: session.authorities.includes('role:create'), update: canEdit, delete: session.authorities.includes('role:delete'), assign: session.authorities.includes('role:assign'), browsePermissions: session.authorities.includes('permission:read') }} />)}
-      {resource === 'clients' && (edit ? <ClientFormDialog key={id} id={id} onClose={close} onSaved={value => { if (value.clientSecret) setIssued(value); else saved() }} /> : <ClientDetailsDialog key={id} id={id} onClose={close} />)}
+      {resource === 'clients' && !issued && (edit ? <ClientFormDialog key={id} id={id} onClose={close} onSaved={value => { if (value.clientSecret) setIssued(value); else saved() }} /> : <ClientDetailsDialog key={id} id={id} onClose={close} />)}
     </ManagementPageContext>
-    {issued && <ClientSecretDialog issued={issued} onClose={() => { setIssued(null); saved() }} />}
+    {issued && <ManagementPageContext value={true}><ClientSecretDialog issued={issued} onClose={() => { setIssued(null); saved() }} /></ManagementPageContext>}
   </div>
 }
 

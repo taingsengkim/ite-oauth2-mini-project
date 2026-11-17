@@ -10,9 +10,10 @@ import { useAccountLocale } from '@/lib/account-locale'
 
 const UserActionPage = lazy(() => import('./user-action-page').then(module => ({ default: module.UserActionPage })))
 const ManagementResourcePage = lazy(() => import('./management-resource-page').then(module => ({ default: module.ManagementResourcePage })))
+const ClientActionPage = lazy(() => import('@/features/clients/pages/client-action-page').then(module => ({ default: module.ClientActionPage })))
 
 const ProfilePage = lazy(() => import('@/features/account/profile/pages/profile-page').then((module) => ({ default: module.ProfilePage })))
-const SecurityPage = lazy(() => import('@/features/account/security/pages/security-page').then((module) => ({ default: module.SecurityPage })))
+const SecurityPage = lazy(() => import('@/features/account/security/pages/security-hub').then((module) => ({ default: module.SecurityHub })))
 const AccountsPage = lazy(() => import('@/features/account/accounts/pages/accounts-page').then((module) => ({ default: module.AccountsPage })))
 const SessionsPage = lazy(() => import('@/features/account/sessions/pages/sessions-page').then((module) => ({ default: module.SessionsPage })))
 const LoginHistoryPage = lazy(() => import('@/features/account/login-history/pages/login-history-page').then((module) => ({ default: module.AccountLoginHistoryPage })))
@@ -72,6 +73,8 @@ export function DashboardRoutes({ session }: { session: DashboardSession }) {
     <Route path="index.html" element={<LegacyEntry session={session} />} />
     <Route element={<DashboardShell session={session} />}>
       <Route path="account/profile/edit" element={<ProfilePage key="edit" edit />} />
+      <Route path="clients/new" element={<RequirePage page="Clients" session={session}><ClientActionPage key="new" action="new" session={session} /></RequirePage>} />
+      {(['rotate', 'delete'] as const).map(action => <Route key={action} path={'clients/:id/' + action} element={<RequirePage page="Clients" session={session}><ClientActionPage key={action} action={action} session={session} /></RequirePage>} />)}
       <Route path="users/new" element={<RequirePage page="Users" session={session}><UserActionPage action="new" session={session} /></RequirePage>} />
       <Route path="users/login-history" element={<RequirePage page="Users" session={session}><UserActionPage action="all-history" session={session} /></RequirePage>} />
       {userActionRoutes.map(({ action }) => <Route key={action} path={'users/:id/' + action} element={<RequirePage page="Users" session={session}><UserActionPage action={action} session={session} /></RequirePage>} />)}
@@ -81,6 +84,8 @@ export function DashboardRoutes({ session }: { session: DashboardSession }) {
       })}
       {dashboardNavigation.map(({ page, path }) => {
         const Page = pages[page]
+        const securityTab = ({ 'Linked Accounts': 'accounts', 'Active Sessions': 'sessions', 'Login History': 'history', 'Account Activity': 'activity' } as Record<string,string>)[page]
+        if(securityTab) return <Route key={path} path={path} element={<Navigate replace to={'/account/security?tab=' + securityTab} />} />
         return <Route key={path} path={path} element={<RequirePage page={page} session={session}><Page /></RequirePage>} />
       })}
     </Route>

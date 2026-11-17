@@ -8,6 +8,7 @@ import { useAccountLocale } from '@/lib/account-locale'
 import { accountMessages } from '../../i18n'
 import { validPictureUrl } from '../schemas'
 import type { AccountProfile } from '../schemas'
+import { profileDetails } from '../details-i18n'
 
 type SessionSummary = { current: boolean; signedInAt: string }
 type IdentitySummary = { identities: { provider: string }[]; hasPassword: boolean }
@@ -21,6 +22,7 @@ export function ProfileOverview({ profile }: { profile: AccountProfile }) {
   const { locale } = useAccountLocale()
   const t = accountMessages[locale]
   const c = copy[locale]
+  const d = profileDetails[locale]
   const [failedPicture, setFailedPicture] = useState<string | null>(null)
   const [summary, setSummary] = useState<{ sessions?: SessionSummary[]; identities?: IdentitySummary } | null>(null)
   useEffect(() => {
@@ -33,7 +35,7 @@ export function ProfileOverview({ profile }: { profile: AccountProfile }) {
     })
     return () => controller.abort()
   }, [])
-  const name = [profile.givenName, profile.familyName].filter(Boolean).join(' ') || profile.username
+  const name = [profile.givenName, profile.middleName, profile.familyName].filter(Boolean).join(' ') || profile.username
   const initials = [profile.givenName || profile.username, profile.familyName].filter(Boolean).map(part => Array.from(part)[0]).join('').toUpperCase()
   const date = (value?: string) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString(locale === 'km' ? 'km-KH' : 'en-GB') : c.missing
   const current = summary?.sessions?.find(session => session.current)
@@ -52,14 +54,17 @@ export function ProfileOverview({ profile }: { profile: AccountProfile }) {
         <Detail label={t.email} value={profile.email || c.missing}>{profile.email && verification(profile.emailVerified)}</Detail>
         <Detail label={t.phoneNumber} value={profile.phoneNumber || c.missing}>{profile.phoneNumber && verification(profile.phoneNumberVerified)}</Detail>
         <Detail label={c.nickname} value={profile.nickname || c.missing} /><Detail label={t.locale} value={profile.locale === 'km' ? 'ខ្មែរ' : 'English'} />
+        <Detail label={d.gender} value={profile.gender ? d[profile.gender] : c.missing} /><Detail label={d.birthdate} value={profile.birthdate ? new Date(profile.birthdate + 'T00:00:00').toLocaleDateString(locale === 'km' ? 'km-KH' : 'en-GB') : c.missing} />
+        <Detail label={d.zoneinfo} value={profile.zoneinfo || c.missing} /><Detail label={d.websiteUrl} value={profile.websiteUrl || c.missing} /><Detail label={d.profileUrl} value={profile.profileUrl || c.missing} />
       </dl></section>
       <section className="rounded-xl border bg-card p-5 sm:p-6"><h2 className="mb-5 font-semibold">{c.details}</h2><dl className="space-y-5"><Detail label={t.created} value={date(profile.createdAt)} /><Detail label={t.updated} value={date(profile.updatedAt)} /><Detail label={c.currentSignIn} value={!summary ? c.loading : !summary.sessions ? c.unavailable : date(current?.signedInAt)} /></dl></section>
     </div>
+    <section className="rounded-xl border bg-card p-5 sm:p-6"><h2 className="mb-5 font-semibold">{d.address}</h2><dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{(['streetAddress', 'locality', 'region', 'postalCode', 'country'] as const).map(field => <Detail key={field} label={d[field]} value={profile.address?.[field] || c.missing} />)}<Detail label={d.lastLogin} value={date(profile.lastLoginAt || undefined)} /></dl></section>
     <section aria-label={c.security} className="space-y-4"><h2 className="font-semibold">{c.security}</h2><div className="grid gap-4 md:grid-cols-3">
       {[
         { title: c.password, value: c.passwordHint, to: '/account/security', icon: ShieldCheck },
-        { title: c.providers, value: !summary ? c.loading : !summary.identities ? c.unavailable : summary.identities.identities.map(identity => ({ google: 'Google', github: 'GitHub', facebook: 'Facebook', telegram: 'Telegram' })[identity.provider.toLowerCase()] || identity.provider).join(', ') || '0', to: '/account/linked-accounts', icon: Link2 },
-        { title: c.sessions, value: !summary ? c.loading : summary.sessions ? String(summary.sessions.length) : c.unavailable, to: '/account/sessions', icon: Monitor },
+        { title: c.providers, value: !summary ? c.loading : !summary.identities ? c.unavailable : summary.identities.identities.map(identity => ({ google: 'Google', github: 'GitHub', facebook: 'Facebook', telegram: 'Telegram' })[identity.provider.toLowerCase()] || identity.provider).join(', ') || '0', to: '/account/security?tab=accounts', icon: Link2 },
+        { title: c.sessions, value: !summary ? c.loading : summary.sessions ? String(summary.sessions.length) : c.unavailable, to: '/account/security?tab=sessions', icon: Monitor },
       ].map(item => <Link key={item.to} to={item.to} className="group flex flex-col gap-4 rounded-xl border bg-card p-5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><div className="flex items-center gap-2"><item.icon className="size-4 text-muted-foreground" /><h3 className="font-medium">{item.title}</h3></div><p className="flex-1 break-words text-sm text-muted-foreground">{item.value}</p><span className="flex items-center gap-2 text-sm font-medium">{c.manage}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span></Link>)}
     </div></section>
   </div>

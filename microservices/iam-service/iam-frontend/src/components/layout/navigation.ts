@@ -40,6 +40,7 @@ export function initialPage(authorities: readonly string[], search: string) {
   return allowed.find((item) => item.view === view)?.page || (view ? 'My Profile' : allowed.find((item) => item.page === 'Overview')?.page || 'My Profile')
 }
 export function pageText(page: DashboardPage, locale: AccountLocale) {
+  if (page === 'Security & Password') return locale === 'km' ? { title: 'សុវត្ថិភាព', description: 'គ្រប់គ្រងពាក្យសម្ងាត់ ឧបករណ៍ វគ្គសកម្ម គណនីភ្ជាប់ និងសកម្មភាពគណនី។' } : { title: 'Security', description: 'Manage your password, devices, sessions, linked accounts, and account activity.' }
   if (page === 'About the Developer') return aboutMessages[locale]
   const account = { 'My Profile': accountMessages[locale], 'Security & Password': securityMessages[locale], 'Linked Accounts': accountsMessages[locale], 'Active Sessions': sessionsMessages[locale], 'Login History': historyMessages[locale], 'Account Activity': activityMessages[locale], 'Account Deactivation': deactivationMessages[locale] }
   if (Object.hasOwn(account, page)) return account[page as keyof typeof account]

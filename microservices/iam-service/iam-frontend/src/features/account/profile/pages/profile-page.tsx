@@ -13,6 +13,7 @@ import type { AccountProfile, ProfileSaved } from '../schemas'
 import { LanguageSwitcher } from '@/components/shared/language-switcher'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ProfileOverview } from './profile-overview'
+import { profileDetails } from '../details-i18n'
 
 export function ProfilePage({ edit = false }: { edit?: boolean }) {
   const navigate = useNavigate()
@@ -44,8 +45,11 @@ export function ProfilePage({ edit = false }: { edit?: boolean }) {
 function ProfileForm({ profile, onReload, onSaved }: { profile: AccountProfile; onReload: () => void; onSaved: (value: ProfileSaved) => void }) {
   const { locale, setLocale } = useAccountLocale()
   const t = accountMessages[locale]
+  const d = profileDetails[locale]
   const form = useSchemaForm(profileSchema(locale, profile.username), { username: profile.username, email: profile.email || '', givenName: profile.givenName, familyName: profile.familyName,
-    nickname: profile.nickname || '', phoneNumber: profile.phoneNumber || '', pictureUrl: profile.pictureUrl || '', locale: profile.locale === 'km' ? 'km' : 'en' })
+    nickname: profile.nickname || '', phoneNumber: profile.phoneNumber || '', pictureUrl: profile.pictureUrl || '', locale: profile.locale === 'km' ? 'km' : 'en',
+    middleName: profile.middleName || '', gender: profile.gender || '', birthdate: profile.birthdate || '', zoneinfo: profile.zoneinfo || '', profileUrl: profile.profileUrl || '', websiteUrl: profile.websiteUrl || '',
+    address: { streetAddress: profile.address?.streetAddress || '', locality: profile.address?.locality || '', region: profile.address?.region || '', postalCode: profile.address?.postalCode || '', country: profile.address?.country || '' } })
   const [username, email, phone, picture, profileLocale] = useWatch({ control: form.control, name: ['username', 'email', 'phoneNumber', 'pictureUrl', 'locale'] })
   const [failedPicture, setFailedPicture] = useState<string | null>(null)
   const busy = form.formState.isSubmitting
@@ -74,6 +78,16 @@ function ProfileForm({ profile, onReload, onSaved }: { profile: AccountProfile; 
         <div className="space-y-2"><FormField form={form} name="phoneNumber" label={t.phoneNumber} type="tel" autoComplete="tel" hint={t.phoneHelp} /><Badge variant="outline">{phone.trim() !== (profile.phoneNumber ?? '') ? t.resetVerification : profile.phoneNumberVerified ? t.verified : t.unverified}</Badge></div>
       </div>
       <div className="max-w-sm space-y-2"><p className="text-sm font-medium">{t.locale}</p><input type="hidden" {...form.register('locale')} /><LanguageSwitcher value={profileLocale} label={t.locale} disabled={busy} onChange={(value) => { form.setValue('locale', value, { shouldDirty: true, shouldValidate: true }); setLocale(value); form.clearErrors() }} /></div>
+      <div className="grid gap-4 border-t pt-5 sm:grid-cols-2">
+        <FormField form={form} name="middleName" label={d.middleName} autoComplete="additional-name" />
+        <FormField form={form} name="gender" label={d.gender} as="select" options={['', 'male', 'female', 'other'].map(value => ({ value, label: value ? d[value as 'male' | 'female' | 'other'] : d.none }))} />
+        <FormField form={form} name="birthdate" label={d.birthdate} type="date" />
+        <FormField form={form} name="zoneinfo" label={d.zoneinfo} hint={d.timezoneHint} />
+        <FormField form={form} name="profileUrl" label={d.profileUrl} type="url" /><FormField form={form} name="websiteUrl" label={d.websiteUrl} type="url" />
+      </div>
+      <div className="space-y-4 border-t pt-5"><h2 className="font-semibold">{d.address}</h2><FormField form={form} name="address.streetAddress" label={d.streetAddress} autoComplete="street-address" as="textarea" />
+        <div className="grid gap-4 sm:grid-cols-2"><FormField form={form} name="address.locality" label={d.locality} autoComplete="address-level2" /><FormField form={form} name="address.region" label={d.region} autoComplete="address-level1" /><FormField form={form} name="address.postalCode" label={d.postalCode} autoComplete="postal-code" /><FormField form={form} name="address.country" label={d.country} hint={d.countryHint} autoComplete="country" /></div>
+      </div>
       {identifiersChanged && <p className="rounded-lg border bg-muted/40 p-3 text-sm">{t.identifiersWarning}</p>}
     </fieldset>
     <div className="flex flex-wrap justify-end gap-2 border-t pt-4"><Button type="button" variant="outline" disabled={busy || !form.formState.isDirty} onClick={() => { form.reset(); setLocale(profile.locale) }}>{t.discard}</Button><Button type="submit" disabled={busy || !form.formState.isDirty}>{busy ? t.saving : t.save}</Button></div>

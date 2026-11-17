@@ -28,7 +28,9 @@ public class ManageAccountProfileUseCase {
     private final Clock clock;
     public record Profile(UUID uuid, String username, String email, boolean emailVerified,
             String givenName, String familyName, String nickname, String phoneNumber, boolean phoneNumberVerified,
-            String pictureUrl, String locale, Instant createdAt, Instant updatedAt) {}
+            String pictureUrl, String locale, Instant createdAt, Instant updatedAt,
+            String middleName, String gender, java.time.LocalDate birthdate, String zoneinfo, String profileUrl, String websiteUrl,
+            kh.edu.istad.platform.iam.valueobject.Address address, Instant lastLoginAt) {}
     public record Saved(Profile profile, boolean signInRequired) {}
 
     @Transactional(readOnly = true)
@@ -39,7 +41,7 @@ public class ManageAccountProfileUseCase {
 
     @Transactional
     @Audited(action = AuditAction.ACCOUNT_PROFILE_UPDATED, target = "#result.profile().uuid()",
-        fields = {"username", "email", "givenName", "familyName", "nickname", "phoneNumber", "pictureUrl", "locale"})
+        fields = {"username", "email", "givenName", "familyName", "nickname", "phoneNumber", "pictureUrl", "locale", "middleName", "gender", "birthdate", "zoneinfo", "profileUrl", "websiteUrl", "address"})
     public Saved update(UpdateAccountProfileCommand command) {
         UUID uuid = currentUser.currentUserUuid();
         var user = users.findByUuidForUpdate(uuid).orElseThrow(() -> new ResourceNotFoundException("User", uuid));
@@ -66,6 +68,15 @@ public class ManageAccountProfileUseCase {
         String actor = actors.currentActor(); var now = clock.instant();
         user.updateIdentifiers(username, email, actor, now);
         user.updateProfile(command.givenName().strip(), command.familyName().strip(), command.nickname().strip(), command.locale(), command.phoneNumber().strip(), actor, now);
+        java.time.LocalDate birthdate = null;
+        if (command.birthdate()!=null && !command.birthdate().isBlank()) {
+            try { birthdate=java.time.LocalDate.parse(command.birthdate()); }
+            catch(java.time.format.DateTimeParseException invalid) { throw new IamDomainException(IamDomainException.Code.VALIDATION_ERROR,"Birthdate must be a valid date"); }
+        }
+        user.updatePersonalDetails(command.middleName(),command.gender(),birthdate,command.zoneinfo(),actor,now);
+        if (command.birthdate()!=null && command.birthdate().isBlank()) user.clearBirthdate(actor,now);
+        user.updateUrls(command.profileUrl(),null,command.websiteUrl(),actor,now);
+        if(command.address()!=null)user.updateAddress(command.address(),actor,now);
         if (!Objects.equals(user.getPictureUrl(), picture.isEmpty() ? null : picture))
             user.manageProfilePicture(picture, actor, now);
         var saved = users.updateAccountProfile(user);
@@ -77,7 +88,8 @@ public class ManageAccountProfileUseCase {
     }
     private Profile profile(User user) {
         return new Profile(user.getUuid(), user.getUsername(), user.getEmail(), user.isEmailVerified(), user.getGivenName(), user.getFamilyName(),
-                user.getNickname(), user.getPhoneNumber(), user.isPhoneNumberVerified(), user.getPictureUrl(), user.getLocale(), user.getCreatedAt(), user.getUpdatedAt());
+                user.getNickname(), user.getPhoneNumber(), user.isPhoneNumberVerified(), user.getPictureUrl(), user.getLocale(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getMiddleName(),user.getGender(),user.getBirthdate(),user.getZoneinfo(),user.getProfileUrl(),user.getWebsiteUrl(),user.getAddress(),user.getLastLoginAt());
     }
     private void conflict(String message) { throw new ResourceConflictException(message); }
 }

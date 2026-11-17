@@ -1,5 +1,5 @@
-import { useRecentSave, rememberSave, clearRecentSave } from '@/lib/recent-save'
-import { useNavigate } from 'react-router-dom'
+import { useRecentSave } from '@/lib/recent-save'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { SearchForm } from '@/components/shared/search-form'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -8,22 +8,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { getDashboardSession } from '@/lib/api-client'
 import { listClients } from '../api/clients-api'
-import { ClientActionDialog, ClientFormDialog, ClientSecretDialog } from '../components/client-dialogs'
-import type { ClientAccess, ClientPage, IssuedClient, ManagedClient } from '../types'
+import type { ClientAccess, ClientPage } from '../types'
 
 export function ClientsPage() {
   const recent = useRecentSave('clients')
   const navigate = useNavigate()
+  const location = useLocation()
   const [access, setAccess] = useState<ClientAccess>({ create: false, update: false, delete: false })
   const [sessionError, setSessionError] = useState<string | null>(null)
 
   const [query, setQuery] = useState({ search: '', page: 0 })
   const [revision, setRevision] = useState(0)
   const [result, setResult] = useState<{ key: string; data?: ClientPage; error?: string } | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [editor, setEditor] = useState<{ id?: string } | null>(null)
-  const [action, setAction] = useState<{ client: ManagedClient; type: 'delete' | 'rotate' } | null>(null)
-  const [issued, setIssued] = useState<IssuedClient | null>(null)
   const key = JSON.stringify([query, revision, recent?.id])
 
   useEffect(() => {
@@ -46,20 +42,13 @@ export function ClientsPage() {
 
   const loading = result?.key !== key
   const data = !loading ? result?.data : undefined
-  function saved(value: IssuedClient) {
-    rememberSave('clients', value.client.id, `Client ${value.client.clientId} saved successfully.`)
-    setEditor(null); setRevision((current) => current + 1)
-    setSuccess(`Client ${value.client.clientId} saved successfully.`)
-    if (value.clientSecret) setIssued(value)
-
-  }
 
   return <section aria-label="OAuth client management" className="space-y-4">
-    {success && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{success}</p>}
+    {location.state?.notice && <p role="status" className="rounded-lg border bg-muted/40 p-3 text-sm">{location.state.notice}</p>}
     {sessionError && <p role="alert" className="text-sm text-destructive">{sessionError}</p>}
     <div className="flex flex-wrap items-end justify-between gap-4">
       <SearchForm label="Search clients" onSearch={(value) => { setQuery({ search: value, page: 0 }); setRevision((current) => current + 1) }} />
-      {access.create && <Button onClick={() => { setSuccess(null); setEditor({}) }}>Register client</Button>}
+      {access.create && <Button onClick={() => { void navigate('/clients/new') }}>Register client</Button>}
     </div>
     {loading ? <p role="status" className="py-8 text-sm text-muted-foreground">Loading clients…</p>
       : result?.error ? <div role="alert" className="space-y-3"><p className="text-sm text-destructive">{result.error}</p><Button variant="outline" onClick={() => setRevision((value) => value + 1)}>Retry</Button></div>
@@ -79,9 +68,9 @@ export function ClientsPage() {
                 <TableCell data-client-actions className="cursor-default"><DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="outline" size="sm" aria-label={`Actions for ${client.name}`} />}>Actions</DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-44"><DropdownMenuItem onClick={() => void navigate('/clients/' + encodeURIComponent(client.id))}>View details</DropdownMenuItem>
-                    {access.update && <><DropdownMenuItem disabled={!client.editable} onClick={() => { setSuccess(null); void navigate('/clients/' + encodeURIComponent(client.id) + '/edit') }}>Edit client</DropdownMenuItem>
-                      <DropdownMenuItem disabled={client.authenticationMethods.includes('none') || !client.authenticationMethods.some((method) => ['client_secret_basic', 'client_secret_post'].includes(method))} onClick={() => { setSuccess(null); setAction({ client, type: 'rotate' }) }}>Rotate secret</DropdownMenuItem></>}
-                    {access.delete && <><DropdownMenuSeparator /><DropdownMenuItem variant="destructive" disabled={client.protectedClient} onClick={() => { setSuccess(null); setAction({ client, type: 'delete' }) }}>Delete client</DropdownMenuItem></>}
+                    {access.update && <><DropdownMenuItem disabled={!client.editable} onClick={() => { void navigate('/clients/' + encodeURIComponent(client.id) + '/edit') }}>Edit client</DropdownMenuItem>
+                      <DropdownMenuItem disabled={client.authenticationMethods.includes('none') || !client.authenticationMethods.some((method) => ['client_secret_basic', 'client_secret_post'].includes(method))} onClick={() => { void navigate('/clients/' + encodeURIComponent(client.id) + '/rotate') }}>Rotate secret</DropdownMenuItem></>}
+                    {access.delete && <><DropdownMenuSeparator /><DropdownMenuItem variant="destructive" disabled={client.protectedClient} onClick={() => { void navigate('/clients/' + encodeURIComponent(client.id) + '/delete') }}>Delete client</DropdownMenuItem></>}
                     {client.protectedClient && <p className="px-2 py-1 text-xs text-muted-foreground">Built-in clients cannot be deleted.</p>}
                   </DropdownMenuContent>
                 </DropdownMenu></TableCell>
@@ -89,12 +78,5 @@ export function ClientsPage() {
           </Table></div>
           <div className="flex items-center justify-between gap-3 text-sm"><p>{data.totalPages ? `Page ${data.page + 1} of ${data.totalPages}` : 'No pages'}</p><div className="flex gap-2"><Button variant="outline" disabled={!query.page} onClick={() => setQuery((current) => ({ ...current, page: current.page - 1 }))}>Previous</Button><Button variant="outline" disabled={query.page + 1 >= data.totalPages} onClick={() => setQuery((current) => ({ ...current, page: current.page + 1 }))}>Next</Button></div></div>
         </>}
-    {editor && <ClientFormDialog key={editor.id ?? 'create'} id={editor.id} onClose={() => setEditor(null)} onSaved={saved} />}
-    {action && <ClientActionDialog client={action.client} action={action.type} onClose={() => setAction(null)} onDone={(value) => {
-      setSuccess(value ? 'Client secret rotated. Save the new secret now.' : `Client ${action.client.clientId} deleted.`)
-      if (action.type === 'delete') clearRecentSave('clients', action.client.id); else rememberSave('clients', action.client.id, 'Client secret rotated successfully.');
-      setAction(null); setRevision((current) => current + 1); if (value) setIssued(value)
-    }} />}
-    {issued && <ClientSecretDialog issued={issued} onClose={() => setIssued(null)} />}
   </section>
 }

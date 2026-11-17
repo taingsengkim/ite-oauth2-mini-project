@@ -455,6 +455,7 @@ public final class User {
     }
 
 
+    public void clearBirthdate(String actor, Instant now) { touch(actor, now); this.birthdate = null; }
     public boolean isProfilePictureManaged() { return profilePictureManaged; }
 
     public void manageProfilePicture(String picture, String actor, Instant now) {

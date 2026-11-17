@@ -12,7 +12,7 @@ export function AppSidebar({ authorities }: { authorities: readonly string[] }) 
   const t = shellMessages[locale]
   const { setOpenMobile } = useSidebar()
   const { pathname } = useLocation()
-  const pages = allowedPages(authorities)
+  const pages = allowedPages(authorities).filter(item => !['Linked Accounts', 'Active Sessions', 'Login History', 'Account Activity'].includes(item.page))
   return <Sidebar collapsible="offcanvas" className="border-sidebar-border">
     <SidebarHeader className="p-5"><Link to="/account/profile" className="flex items-center gap-3" onClick={() => setOpenMobile(false)}><img src="/assets/branding/istad-seal.png" alt="ISTAD seal" className="size-12 shrink-0 rounded-full border border-border bg-white object-contain p-0.5" width="48" height="48" /><div><p className="font-semibold text-sidebar-foreground">ISTAD IAM</p><p className="text-xs text-muted-foreground">{t.identity}</p></div></Link></SidebarHeader>
     <SidebarContent className="px-3"><nav aria-label={t.navigation}>
